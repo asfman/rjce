@@ -5,7 +5,7 @@ Persistence = {
 
   /* Creating helper methods for each persistence entry (load() shoudn't be used directly) */
   init: function() {
-    var existingKeys = ['version', 'popup_size'];
+    var existingKeys = ['version'];
 
     var _this = this;
     for(var i = 0, len = existingKeys.length; i < len; ++i) {
