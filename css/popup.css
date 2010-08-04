@@ -3,7 +3,7 @@ body{width:480px; color:#182A58; line-height: 1.5; padding: 4px;}
 a{text-decoration:none; color:#049;} 
 a:hover {text-decoration: underline;}
 #scrollArea{
-	height: 450px;
+	height: 466px;
 	overflow-y: auto;
 	word-wrap: break-word;
 	background: url(images/tab.gif) no-repeat;
@@ -17,7 +17,7 @@ a:hover {text-decoration: underline;}
 	width: 466px; 
 	padding: 6px; 
 	margin: 0; 
-	height: 54px;
+	height: 36px;
 	overflow-y: auto;
 	-webkit-border-radius: 5px;
 	background-color: #f0f5fb;
@@ -46,35 +46,41 @@ a:hover {text-decoration: underline;}
 	background-color: #f0f5fb;
 	border: 1px solid #c1cddc;
 }
-
+#btnCt{margin-bottom: 8px;}
+#btnCt input{padding: 2px 6px; text-shadow: 3px 3px 6px #ccc;}
 
 #tabs {
-	height: 27px;
+	height: 26px;
 	position: relative;
+	margin: 8px 0;
 }
 
 #tabs a{
-	height: 28px;
-	line-height: 28px;
+	height: 26px;
+	line-height: 26px;
 	text-align: center;
 	padding: 0 0 0 15px;
 	float: left;
-	margin-left: -1px;
 }
-
 #tabs span {
 	padding: 0 15px 0 0;
-	height: 28px;
-	line-height: 28px;
+	height: 26px;
+	line-height: 26px;
 	text-align: center;
 	cursor: pointer;
 	font-size: 14px;
 	float: left;
 }
-
+#tabs a:hover{
+	text-decoration: none;
+}
+#tabs a.active{
+	background: skyblue;
+	-webkit-border-radius: 5px;
+}
 #tabs a.active span {
 	font-weight: bold;
-	color: #000;
+	color: #fff;
 }
 
 #loading{
@@ -82,31 +88,32 @@ a:hover {text-decoration: underline;}
 	right: 10px;
 	top: 4px;
 	background: skyblue;
-	color: #fff;
+	color: #000;
 	padding: 2px 8px;
 	font-size: 12px;
-	opacity: .5;
+	opacity: .7;
 }
 .item{
-  padding: 8px;
-  border-bottom:1px solid #D2DADA;
-  background: #fff;
-  overflow: hidden;
-  vertical-align: bottom;
-  zoom: 1;
+	padding: 8px;
+	border-bottom:1px solid #D2DADA;
+	background: #fff;
+	overflow: hidden;
+	vertical-align: bottom;
 }
 
 .avatar{
 	float: left;
 }
 .details{
-  overflow: hidden;
-  width: 100%;
-  margin-left: -64px;	
+	overflow: hidden;
+	width: 100%;
+	margin-left: -64px;
+}
+.details *{
+	font-size: 14px;
 }
 .marginLeft{
-  margin-left: 64px;
-  word-wrap: break-word;
-  word-break: break-all;
-  zoom: 1;
+	margin-left: 64px;
+	word-wrap: break-word;
+	word-break: break-all;
 }

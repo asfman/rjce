@@ -1,14 +1,6 @@
-function getView(sType){
-    var views = chrome.extension.getViews();
-    for (var i = 0; i < views.length; i++) {
-        var view = views[i];
-        if (view.viewName && view.viewName == sType) {
-            return view;
-        }
-    }
-    return null;
-}
-if(typeof renjian == "undefined") renjian = {userName: "asfman", password: "rjzd10cs"};
+if(typeof renjian == "undefined") var renjian = {};
+renjian.userName = "pp";
+renjian.password = "123456";
 renjian.util = {
 	getTimelineName: {
 		friendsTimeline: "动态",
@@ -20,39 +12,44 @@ renjian.util = {
 			curType = curType || "friendsTimeline";
 			if(!renjian.api[curType]) return false;
 			renjian.trace("读取" + renjian.util.getTimelineName[curType]);
-			$("#loading").html("读取" +  renjian.util.getTimelineName[curType]).show();
+			$("#loading").stop().css("opacity", 0.7).html("正在读取" +  renjian.util.getTimelineName[curType]).show();
 			renjian.trace("读取url:" + renjian.api[curType]);
 			renjian.curType = curType;
 			renjian.util.clearTimer();
-			if(renjian.xhr) renjian.xhr.abort();
-			if(!force && renjian.appData[curType] && renjian.appData[curType].data.length){
-				createHtml(curType);
+			if(renjian.xhr) try{renjian.xhr.abort();}catch(err){}
+			var cacheData = Persistence.localStorage.getObject(curType);
+			if(!force && cacheData && cacheData.length){
+				createHtml(curType, cacheData);
 				return false;
 			}
 			renjian.xhr = $.ajax({
 				url: renjian.api[curType], 
 				dataType: "json",
+				data: {count: renjian.pageSize},
 				username: renjian.userName,
 				password: renjian.password,
 				success: function(arr){
 						arr = arr || [];
-						if(!arr.length) return false;
-						renjian.appData[curType] = {data: arr};
+						Persistence.localStorage.setObject(curType, arr);
 						renjian.trace("解析" + curType + ", 共" + arr.length + "条");
-						createHtml(curType);
+						createHtml(curType, arr);
 					}
 				});
-				function createHtml(curType){
-						var arr =  renjian.appData[curType].data;
-						if(arr && arr.length){
+				function createHtml(curType, cacheData){
+						var arr =  cacheData || Persistence.localStorage.getObject(curType), len = arr.length;
+						if(arr && len){
 							var ret = ["<ul id='" + curType + "List'>"];
-							ret.push($.map(arr, function(status,	idx){
-								if(idx == 0) renjian.appData[curType].lastId = status.id;
+							ret.push($.map(arr, function(status, idx){
+								if(idx == 0) renjian.appData[curType].firstId = status.id;
+								if(idx == len - 1) renjian.appData[curType].lastId = status.id;
 								return renjian.util.parseData(status);
 							}).join(""));
 							ret.push("</ul>");
-							$("#loading").html("读取完成").fadeOut(3000);
+							$("#loading").html("读取完成").fadeOut(1500);
 							$("#scrollArea").empty().html(ret.join(""));
+							$("#scrollArea").find(".avatar img").each(function(){
+								this.onerror = chrome.extension.getBackgroundPage().imgOnerror;
+							});
 							renjian.trace("读取" + renjian.util.getTimelineName[curType] +"end");
 							/*
 							renjian.trace("开启定时器读取" + renjian.curType);
@@ -60,7 +57,9 @@ renjian.util = {
 								renjian.util.getData();
 							}, renjian.interval);
 							*/
-						}				
+						}else{
+							$("#scrollArea").html("还没有任何数据");
+						}			
 				}
 		}catch(e){
 			renjian.trace("error:" + e.message);
@@ -71,7 +70,7 @@ renjian.util = {
 			renjian.trace("读取" + renjian.util.getTimelineName[renjian.curType] + "动态");
 			renjian.trace("sinceId:" + renjian.appData[renjian.curType].lastId);
 			try{
-					if(renjian.xhr) renjian.xhr.abort();
+					if(renjian.xhr) try{renjian.xhr.abort();}catch(err){}
 					renjian.xhr = $.ajax({
 							url: renjian.api[renjian.curType], 
 							data: {since_id : renjian.appData[renjian.curType].lastId},

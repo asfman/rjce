@@ -1,26 +1,39 @@
 <!doctype html>
 <html>
 <head>
-	<meta http-equiv="Content-Type" content="text/html; charset=UTF-8"  />
-	<link rel="stylesheet" rev="stylesheet" href="css/common.css" type="text/css" />	
-	<link rel="stylesheet" rev="stylesheet" href="css/popup.css" type="text/css" />
-	<script type="text/javascript" src="js/jquery.js"></script>
-	<script type="text/javascript" src="js/config.js"></script>	
-	<script type="text/javascript" src="js/util.js"></script>	
-	<script type="text/javascript">
+<meta http-equiv="Content-Type" content="text/html; charset=UTF-8"  />
+<link rel="stylesheet" rev="stylesheet" href="css/common.css" type="text/css" />	
+<link rel="stylesheet" rev="stylesheet" href="css/popup.css" type="text/css" />
+<script type="text/javascript" src="js/jquery-1.4.2.js"></script>
+<script type="text/javascript" src="js/config.js"></script>	
+<script type="text/javascript" src="js/renjian.js"></script>	
+<script type="text/javascript" src="js/util.js"></script>	
+<script type="text/javascript" src="js/DataStack.js"></script>	
+<script type="text/javascript">
+try{
+	var Persistence = chrome.extension.getBackgroundPage().Persistence;
+	if(Persistence && Persistence.userName().val()){
+		renjian.userName = Persistence.userName().val();
+		renjian.password = Persistence.password().val();
+		var loginUser = Persistence.localStorage.getObject("user");
 		$(document).ready(function(){
 			$("#controlPostArea").click(function(){
 				var oPost = $("#postArea"), oImgs = $(this).find("img");
 				var isVisible = oPost.is(':visible');
+				var oldWinHt = window.innerHeight;
 				if(isVisible){
-					oPost.slideUp();
+					oPost.slideUp(function(){
+						$("#scrollArea").height(466);
+					});
 					oImgs.attr("src", "images/arrow_down.gif");
 				}else{
-					oPost.slideDown();
+					oPost.slideDown(function(){
+						$("#scrollArea").height(466+oldWinHt-window.innerHeight);
+					});
 					oImgs.attr("src", "images/arrow_up.gif");
 					oPost.find("textarea").focus();
 				}
-			});
+			});			
 			function setActiveCss(){
 				$("#tabs a.active").removeClass("active");
 				$(this).addClass("active");
@@ -40,10 +53,43 @@
 				setActiveCss.call(this);
 				return false;
 			});	
+			$("#say").keydown(function(e){
+				if(e.metaKey && e.which == 13){
+					$("#postBtn").click();
+					return false;
+				}
+			});
+			$("#postBtn").click(function(){
+				var val = $("#say").val();
+				if(!val) return false;
+				$("#loading").html("正在发送...").show();
+				renjian.trace(renjian.userName + "开始发送");
+				$.ajax({
+						type: "POST",
+						data: {text: val, source: "人间大炮"},
+						url: renjian.api.update,
+						success: function(data, status, xhr){
+							renjian.trace("发送成功");
+							$("#say").val("");
+							$("#loading").html("发送成功！");
+						},
+						complete: function(){
+							$("#loading").fadeOut(1500);
+							renjian.trace("发送完成");
+						}
+				});
+				return false;
+			});			
 			//init
 			setTimeout('$("#friendsTab").click();', 100);
 		});
-	</script>
+	}else{
+		//fk, must delayed to create tab, avoid popup win shows at the same time
+		setTimeout("chrome.tabs.create({url: chrome.extension.getURL('options.html')})", 100);
+	}
+}catch(e){alert(e.message);}
+
+</script>
 </head>
 <body>
 <div id="wrap">
@@ -51,7 +97,7 @@
 		<div id="postArea" class="hide">
 			<div id="txtCt"><textarea id="say"></textarea></div>
 			<div id="btnCt">
-				<input class="pointer" type="button" value="发送人间大炮" />
+				<input id="postBtn" class="pointer" type="button" value="发送人间大炮" />
 			</div>
 		</div>
 		<div id="controlPostArea">
@@ -69,7 +115,7 @@
 		    <div id="loading" class="hide">loading...</div>
     </div>
     <div class="scrollArea">
-		<div id="scrollArea"></div>
+		<div id="scrollArea"><div style="text-align: center; padding-top: 44px;"><img src="images/ajax.gif" /></div></div>
 	</div>	
 </div>
 </body>

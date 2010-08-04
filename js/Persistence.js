@@ -2,16 +2,13 @@ Persistence = {
   load: function (key) {
     return new ValueWrapper(key);
   },
-
-  /* Creating helper methods for each persistence entry (load() shoudn't be used directly) */
+  localStorage: localStorage,
   init: function() {
-    var existingKeys = ['version'];
-
+    var existingKeys = ['user', 'userName', "password"];
     var _this = this;
     for(var i = 0, len = existingKeys.length; i < len; ++i) {
       var currentKey = existingKeys[i];
       var methodName = currentKey.replace(/_(\w)/g, function(m1, m2) { return m2.toUpperCase(); });
-      /* Ohh, so sad I can't just use the 'let' keyword */
       this[methodName] = (function(key) {
         return function() {
           return _this.load(key);
@@ -19,8 +16,9 @@ Persistence = {
       })(currentKey);
     }
   },
-
   cleanupOldData: function() {
+	localStorage.removeItem('user');
+	localStorage.removeItem('userName');
     localStorage.removeItem('password');
   }
 };

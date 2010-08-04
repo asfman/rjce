@@ -2,6 +2,7 @@ var renjian = {
 	trace:	function(str){
 		try{
 			console.log(str);
+			//alert(str);
 		}catch(e){
 			alert(str);
 		}
@@ -14,8 +15,12 @@ var renjian = {
 			mentionsTimeline: "http://api.renjian.com/statuses/mentions.json",
 			single_status:	"http://api.renjian.com/statuses/show/@{statusId}.json",
 			destroy_status: "http://api.renjian.com/statuses/destroy/@{statusId}.json",
+			end_session: "http://api.renjian.com/account/end_session.json",
 			update: " http://api.renjian.com/statuses/update.format"
 	},
+	statusFields: ["id", "created_at", "relative_date", "text", "source", "truncated", "favorited",
+	         "original_url", "status_type", "link_title", "link_desc", "stick", "favoriters",
+	         "user", "all_zt_num", "level"],
 	statusTplPicture: '\
 		<li class="item">\
 			<div class="avatar">\
@@ -68,9 +73,14 @@ var renjian = {
 			</div>\
 		</li>\
 	',
-	appData: [],
+	appData: {
+		friendsTimeline: {},
+		mentionsTimeline: {},
+		publicTimeline: {}
+	},
 	curType: "",
 	timer: {},
 	interval: 8000,
+	pageSize: 20,
 	xhr: null
 };
