@@ -16,10 +16,14 @@ Persistence = {
       })(currentKey);
     }
   },
-  cleanupOldData: function() {
-	localStorage.removeItem('user');
-	localStorage.removeItem('userName');
-    localStorage.removeItem('password');
+  cleanData: function() {
+	   var l = renjian.typeList.length, key;
+	   for(var i = 0 ; i < l; i ++){
+		   key = renjian.typeList[i];
+		   if(localStorage.getItem(key)){
+				localStorage.removeItem(key);
+		   }
+	   }
   }
 };
 Persistence.init();

@@ -4,7 +4,7 @@
 <meta http-equiv="Content-Type" content="text/html; charset=UTF-8"  />
 <link rel="stylesheet" rev="stylesheet" href="css/common.css" type="text/css" />	
 <link rel="stylesheet" rev="stylesheet" href="css/popup.css" type="text/css" />
-<script type="text/javascript" src="js/jquery-1.4.2.js"></script>
+<script type="text/javascript" src="js/jquery.js"></script>
 <script type="text/javascript" src="js/config.js"></script>	
 <script type="text/javascript" src="js/renjian.js"></script>	
 <script type="text/javascript" src="js/util.js"></script>	
@@ -81,7 +81,10 @@ try{
 				return false;
 			});			
 			//init
-			setTimeout('$("#friendsTab").click();', 100);
+			$("#screenName").html(renjian.userName + " ");
+			setTimeout(function(){
+				$("#friendsTab").click();
+			}, 100);
 		});
 	}else{
 		//fk, must delayed to create tab, avoid popup win shows at the same time
@@ -103,7 +106,7 @@ try{
 		<div id="controlPostArea">
 			<div class="controlPostAreaPd clearfix">
 			    <img class="fl" src="images/arrow_down.gif"/>
-			            发射人间大炮
+			    <b id="screenName"></b>发射人间大炮
 			    <img class="fr" src="images/arrow_down.gif"/>
 		    </div>
 		</div>

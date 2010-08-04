@@ -73,11 +73,7 @@ var renjian = {
 			</div>\
 		</li>\
 	',
-	appData: {
-		friendsTimeline: {},
-		mentionsTimeline: {},
-		publicTimeline: {}
-	},
+	typeList: ["friendsTimeline", "mentionsTimeline", "publicTimeline"],
 	curType: "",
 	timer: {},
 	interval: 8000,

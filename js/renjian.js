@@ -15,56 +15,69 @@ renjian.util = {
 			$("#loading").stop().css("opacity", 0.7).html("正在读取" +  renjian.util.getTimelineName[curType]).show();
 			renjian.trace("读取url:" + renjian.api[curType]);
 			renjian.curType = curType;
-			renjian.util.clearTimer();
 			if(renjian.xhr) try{renjian.xhr.abort();}catch(err){}
 			var cacheData = Persistence.localStorage.getObject(curType);
 			if(!force && cacheData && cacheData.length){
-				createHtml(curType, cacheData);
+				renjian.util.createHtml(cacheData);
+				renjian.util.checkUpdate();
 				return false;
 			}
-			renjian.xhr = $.ajax({
-				url: renjian.api[curType], 
-				dataType: "json",
-				data: {count: renjian.pageSize},
-				username: renjian.userName,
-				password: renjian.password,
-				success: function(arr){
-						arr = arr || [];
-						Persistence.localStorage.setObject(curType, arr);
-						renjian.trace("解析" + curType + ", 共" + arr.length + "条");
-						createHtml(curType, arr);
-					}
-				});
-				function createHtml(curType, cacheData){
-						var arr =  cacheData || Persistence.localStorage.getObject(curType), len = arr.length;
-						if(arr && len){
-							var ret = ["<ul id='" + curType + "List'>"];
-							ret.push($.map(arr, function(status, idx){
-								if(idx == 0) renjian.appData[curType].firstId = status.id;
-								if(idx == len - 1) renjian.appData[curType].lastId = status.id;
-								return renjian.util.parseData(status);
-							}).join(""));
-							ret.push("</ul>");
-							$("#loading").html("读取完成").fadeOut(1500);
-							$("#scrollArea").empty().html(ret.join(""));
-							$("#scrollArea").find(".avatar img").each(function(){
-								this.onerror = chrome.extension.getBackgroundPage().imgOnerror;
-							});
-							renjian.trace("读取" + renjian.util.getTimelineName[curType] +"end");
-							/*
-							renjian.trace("开启定时器读取" + renjian.curType);
-							renjian.timer.friendsTimeline = setInterval(function(){
-								renjian.util.getData();
-							}, renjian.interval);
-							*/
-						}else{
-							$("#scrollArea").html("还没有任何数据");
-						}			
-				}
+			renjian.xhr = this.getStatus({count: renjian.pageSize}, function(arr){
+				var curType = renjian.curType;
+				arr = arr || [];
+				Persistence.localStorage.setObject(curType, arr);
+				renjian.trace("解析" + curType + ", 共" + arr.length + "条");
+				renjian.util.createHtml(arr);
+			});
 		}catch(e){
+			alert(e);
 			renjian.trace("error:" + e.message);
 		}
 		return false;
+	},
+	createHtml: function(cacheData){
+	    var curType = renjian.curType;
+		var arr =  cacheData || Persistence.localStorage.getObject(curType), len = arr.length;
+		if(arr && len){
+			var ret = ["<ul id='" + curType + "List'>"];
+			ret.push($.map(arr, function(status, idx){
+				return renjian.util.parseData(status);
+			}).join(""));
+			ret.push("</ul>");
+			$("#loading").html("读取完成").fadeOut(1500);
+			$("#scrollArea").empty().html(ret.join(""));
+			$("#scrollArea").find(".avatar img").each(function(){
+				this.onerror = chrome.extension.getBackgroundPage().imgOnerror;
+			});
+		}else{
+			$("#scrollArea").html("还没有任何数据");
+		}			
+	},
+	getStatus: function(dataObj, callback){
+		return $.ajax({
+				url: renjian.api[renjian.curType], 
+				dataType: "json",
+				data: dataObj,
+				username: renjian.userName,
+				password: renjian.password,
+				success: function(arr){
+						callback(arr);
+				}
+		});		
+	},
+	checkUpdate: function(){
+		var curType = renjian.curType, arr = Persistence.localStorage.getObject(curType);
+		if(!arr || !arr.length) return;
+		var sinceId = arr[0].id;
+		renjian.xhr = this.getStatus({since_id: sinceId}, function(data){
+			data = data || [];
+			if(data.length > 1){
+				Array.prototype.unshift.apply(arr, data);
+				arr.length = renjian.pageSize;
+				Persistence.localStorage.setObject(curType, arr);
+				renjian.util.createHtml(arr);
+			}
+		});
 	},
 	getData: function(){
 			renjian.trace("读取" + renjian.util.getTimelineName[renjian.curType] + "动态");
