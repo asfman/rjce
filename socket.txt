@@ -1,0 +1,132 @@
+/* {command:'hashtag',action:'add',tags:['XXXX','XXXX']} */
+/* {command:'hashtag',action:'remove',tags:['XXXX','XXXX']} */
+/* {command:'hashtag',action:'reset',tags:['XXXX','XXXX']} */
+        private var port:int = 9999;
+        private var userId:int = 292;
+        private var reconnect:Boolean = true;
+        private var host:String = "localhost";
+        private var pingId:uint;
+        private var messageTypes:String;
+        private var socket:Socket;
+
+        public function send(_main_StylesInit:String) : void
+        {
+            if (socket != null && socket.connected)
+            {
+                socket.writeUTFBytes(_main_StylesInit);
+                socket.flush();
+            }
+            return;
+        }// end function
+
+    
+        public function onSecurityError(event:SecurityErrorEvent) : void
+        {
+            ExternalInterface.call("SocketOnError", "SecurityError" + event.toString());
+            this.reset();
+            return;
+        }// end function
+
+    
+        public function onConnect(event:Event) : void
+        {
+            ExternalInterface.call("SocketOnConnect");
+            var _loc_2:* = "[{command:\'authentication\',userId:\'" + this.userId + "\',messageTypes:" + this.messageTypes + ",clientType:\'flash\'}]";
+            this.send(_loc_2);
+            this.pingId = setInterval(ping, 1000 * 120);
+            return;
+        }// end function
+
+    
+        public function reset() : void
+        {
+            var _loc_1:* = ExternalInterface.call("isReconnect");
+            if (_loc_1)
+            {
+                ExternalInterface.call("SocketReset");
+                setTimeout(connect, 1000 * 3);
+            }
+            return;
+        }// end function
+
+    
+        public function onClose(event:Event) : void
+        {
+            ExternalInterface.call("SocketOnClose");
+            if (this.pingId)
+            {
+                clearInterval(this.pingId);
+            }
+            this.reset();
+            return;
+        }// end function
+
+    
+        public function begin() : void
+        {
+            ExternalInterface.addCallback("send", send);
+            ExternalInterface.addCallback("close", close);
+            this.host = ExternalInterface.call("getHost");
+            this.port = ExternalInterface.call("getPort");
+            this.userId = ExternalInterface.call("getUser");
+            this.connect();
+            return;
+        }// end function
+
+    
+        public function connect() : void
+        {
+            if (this.socket != null && this.socket.connected)
+            {
+                return;
+            }
+            this.messageTypes = ExternalInterface.call("getMessageTypes");
+            try
+            {
+                socket.addEventListener(Event.CONNECT, onConnect);
+                socket.addEventListener(Event.CLOSE, onClose);
+                socket.addEventListener(ProgressEvent.SOCKET_DATA, onData);
+                socket.addEventListener(IOErrorEvent.IO_ERROR, onError);
+                socket.addEventListener(SecurityErrorEvent.SECURITY_ERROR, onSecurityError);
+                socket.connect(host, port);
+            }
+            catch (error:Error)
+            {
+                ExternalInterface.call("SocketOnError", error);
+                this.reset();
+            }
+            return;
+        }// end function
+
+    
+        public function onError(event:IOErrorEvent) : void
+        {
+            ExternalInterface.call("SocketOnError", "IOError:" + event.toString());
+            this.reset();
+            return;
+        }// end function
+
+    
+        public function onData(event:ProgressEvent) : void
+        {
+            ExternalInterface.call("SocketOnData", socket.readUTFBytes(socket.bytesAvailable));
+            return;
+        }// end function
+
+    
+        public function ping() : void
+        {
+            var _loc_1:* = "[{command:\'ping\',userId:\'" + this.userId + "\',clientType:\'flash\'}]";
+            this.send(_loc_1);
+            return;
+        }// end function
+
+    
+        public function close() : void
+        {
+            if (this.socket != null && this.socket.connected)
+            {
+                this.socket.close();
+            }
+            return;
+        }
