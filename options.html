@@ -60,20 +60,23 @@ legend{
 #loading{
 	background: skyblue;
 	color: #fff;
-	padding: 6px 18px;
-	font-size: 12px;
+	padding: 6px 26px;
+	font-size: 14px;
+}
+#loading.error{
+	color: red;
 }
 </style>
 <script type="text/javascript" src="js/jquery.js"></script>
 <script type="text/javascript" src="js/config.js"></script>	
 <script type="text/javascript" src="js/util.js"></script>	
 <script type="text/javascript">
-	$.post(renjian.api.end_session);
 	var Persistence = chrome.extension.getBackgroundPage().Persistence;
 	function submitHandler(){
 		var userName = $("#userName").val(), password = $("#pwd").val();
 		if(!userName || !password) return false;
-		$("#loading").html("正在验证").show();
+		$("#loading").html("正在验证......").removeClass("error").show();
+		//$.post(renjian.api.end_session, function(){});	
 		$.ajax({
 			type: "POST",
 			dataType: "json",
@@ -84,10 +87,15 @@ legend{
 				Persistence.userName().save(userName);
 				Persistence.password().save(password);
 				Persistence.localStorage.setObject("user", data);
-				try{Persistence.cleanData();}catch(e){alert(e)}
-			    $("#loading").html("验证完成").fadeOut(3000);
+			    $("#loading").html("验证成功！").fadeOut(3000);
+			},
+			error: function(xhr, status, err){
+				$("#loading").html("验证失败，用户名或者密码错误！").addClass("error");
+			},
+			complete: function(){
+				try{Persistence.cleanData();}catch(e){alert(e);}
 			}
-		});
+		});			
 		return false;
 	}
 	$(document).ready(function(){
@@ -96,6 +104,9 @@ legend{
 			$("#userName").val(Persistence.userName().val());
 			$("#pwd").val(Persistence.password().val());
 		}
+		$("#pwd").keyup(function(e){
+			if(e.which == 13) submitHandler();
+		});
 	});
 </script>
 </head>

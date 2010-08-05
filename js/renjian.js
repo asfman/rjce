@@ -50,7 +50,7 @@ renjian.util = {
 				this.onerror = chrome.extension.getBackgroundPage().imgOnerror;
 			});
 		}else{
-			$("#scrollArea").html("还没有任何数据");
+			//$("#scrollArea").html("还没有任何数据");
 		}			
 	},
 	getStatus: function(dataObj, callback){
@@ -73,51 +73,20 @@ renjian.util = {
 			data = data || [];
 			if(data.length > 1){
 				Array.prototype.unshift.apply(arr, data);
-				arr.length = renjian.pageSize;
+				//arr.length = renjian.pageSize;
 				Persistence.localStorage.setObject(curType, arr);
-				renjian.util.createHtml(arr);
+				var serverTime  = new Date(xhr.getResponseHeader("Date")).valueOf();
+				$("#" + curType + "List .time").each(function(){
+					$(this).html(renjian.util.calRelTime($(this).attr("rel"), serverTime));
+				});
+				if(data.length < 5)
+					$.each(data, function(idx, status){
+						$(renjian.util.parseData(status)).hide().prependTo(ct).slideDown();
+					});	
+				else
+					renjian.util.createHtml(arr);
 			}
 		});
-	},
-	getData: function(){
-			renjian.trace("读取" + renjian.util.getTimelineName[renjian.curType] + "动态");
-			renjian.trace("sinceId:" + renjian.appData[renjian.curType].lastId);
-			try{
-					if(renjian.xhr) try{renjian.xhr.abort();}catch(err){}
-					renjian.xhr = $.ajax({
-							url: renjian.api[renjian.curType], 
-							data: {since_id : renjian.appData[renjian.curType].lastId},
-							dataType: "json",
-							username: renjian.userName,
-							password: renjian.password,
-							success: function(arr, status, xhr){
-											arr = arr || [], curType = renjian.curType;
-											var serverTime  = new Date(xhr.getResponseHeader("Date")).valueOf();
-											$("#" + curType + "List .time").each(function(){
-												$(this).html(renjian.util.calRelTime($(this).attr("rel"), serverTime));
-											});
-											if(!arr.length){
-												renjian.trace("没有新内容");
-												return false;
-											}
-											renjian.trace("有新内容，长度为：" + arr.length);
-											renjian.trace("合并数据");
-											Array.prototype.unshift.apply(renjian.appData[curType].data, arr);
-											if(arr.length > 1) arr = arr.reverse();
-											renjian.appData[curType].lastId = arr[0].id;
-											renjian.trace("push新内容");
-											var ct = $("#" + curType + "List");
-											$.each(arr, function(idx, status){
-												$(renjian.util.parseData(status)).hide().prependTo(ct).slideDown();
-											});
-								},
-								complete: function(){
-									renjian.trace("读取" + renjian.util.getTimelineName[curType] + "end");
-								}
-					});
-			}catch(e){
-				renjian.trace("error:" + e.message);
-			}
 	},
 	parseData: function(status){
 			var tplObj = {
