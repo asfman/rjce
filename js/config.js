@@ -22,7 +22,7 @@ var renjian = {
 	         "original_url", "status_type", "link_title", "link_desc", "stick", "favoriters",
 	         "user", "all_zt_num", "level"],
 	statusTplPicture: '\
-		<li class="item">\
+		<li class="item status_@{id}">\
 			<div class="avatar">\
 				<img src="@{avatar}" />\
 			</div>\
@@ -41,7 +41,7 @@ var renjian = {
 		</li>\
 	',
 	statusTplText: '\
-		<li class="item">\
+		<li class="item status_@{id}">\
 			<div class="avatar">\
 				<img src="@{avatar}" />\
 			</div>\
@@ -57,7 +57,7 @@ var renjian = {
 		</li>\
 	',
 	statusTplLink: '\
-		<li class="item">\
+		<li class="item status_@{id}">\
 			<div class="avatar">\
 				<img src="@{avatar}" />\
 			</div>\

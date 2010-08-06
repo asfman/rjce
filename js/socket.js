@@ -1,5 +1,4 @@
-	var sub_messageTypes = "['STATUS']";
-alert(sub_messageTypes);
+	var sub_messageTypes = "['STATUS', 'HASH_TAG']";
 	function getHost(){
 		return "message.renjian.com";
 	}
@@ -24,11 +23,8 @@ alert(sub_messageTypes);
 		return socket_connected == false;
 	}
 
-
 	var socket_connected = false;
-
 	SocketCheckTask = setInterval("socketCheck()",1000*30);
-
 	function socketCheck() {
 		if (socket_connected == true) return;
 		MessageManager.printlog("Flash消息推送服务不可用!");
@@ -48,7 +44,12 @@ alert(sub_messageTypes);
 
 		return {
 			printlog: function(data){
-				 alert(data);
+				var log_console = document.getElementById("socket_log_console");
+				if (log_console) {
+					if (log_console.innerHTML.length >= 5000)
+						log_console.innerHTML = "";
+					log_console.innerHTML += (getDateStr() + ":" + data + "<br />");
+				}
 			},
 			addListener: function(messageType, listener){
 				listeners[messageType] = listener;
@@ -98,7 +99,19 @@ alert(sub_messageTypes);
 		MessageManager.printlog("socket connection close!");
 		socket_connected = false;
 	}
-	function SocketOnError(error){
+	function SocketOnError(error){alert(error);
 		MessageManager.printlog("socket connection error:"+error);
 		socket_connected = false;
 	}
+/*
+	<script type="text/javascript">
+		document.write('<object id="socket" classid="clsid:D27CDB6E-AE6D-11cf-96B8-444553540000"\
+			codebase="http://fpdownload.macromedia.com/get/flashplayer/current/swflash.cab">\
+			<param name="movie" value="/images/RJSocket.swf" />\
+			<param name="allowScriptAccess" value="sameDomain" />\
+			<embed src="/images/RJSocket.swf" name="socket" allowScriptAccess="sameDomain"\
+				type="application/x-shockwave-flash"\
+				pluginspage="http://www.adobe.com/go/getflashplayer" />\
+			</object>');
+	</script>
+ */

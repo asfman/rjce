@@ -12,22 +12,23 @@ renjian.util = {
 			curType = curType || "friendsTimeline";
 			if(!renjian.api[curType]) return false;
 			renjian.trace("读取" + renjian.util.getTimelineName[curType]);
-			$("#loading").stop().css("opacity", 0.7).html("正在读取" +  renjian.util.getTimelineName[curType]).show();
 			renjian.trace("读取url:" + renjian.api[curType]);
 			renjian.curType = curType;
-			if(renjian.xhr) try{renjian.xhr.abort();}catch(err){}
 			var cacheData = Persistence.localStorage.getObject(curType);
 			if(!force && cacheData && cacheData.length){
 				renjian.util.createHtml(cacheData);
 				renjian.util.checkUpdate();
 				return false;
 			}
-			renjian.xhr = this.getStatus({count: renjian.pageSize}, function(arr){
+			this.getStatus({count: renjian.pageSize}, function(arr){
 				var curType = renjian.curType;
 				arr = arr || [];
 				Persistence.localStorage.setObject(curType, arr);
 				renjian.trace("解析" + curType + ", 共" + arr.length + "条");
 				renjian.util.createHtml(arr);
+			}, {
+				start: "正在读取" +  renjian.util.getTimelineName[curType],
+				end: "读取完成"
 			});
 		}catch(e){
 			alert(e);
@@ -44,54 +45,81 @@ renjian.util = {
 				return renjian.util.parseData(status);
 			}).join(""));
 			ret.push("</ul>");
-			$("#loading").html("读取完成").fadeOut(1500);
-			$("#scrollArea").empty().html(ret.join(""));
-			$("#scrollArea").find(".avatar img").each(function(){
+			var o = $("#scrollArea");
+			o.empty().html(ret.join(""));
+			o.find(".avatar img").each(function(){
 				this.onerror = chrome.extension.getBackgroundPage().imgOnerror;
 			});
-		}else{
-			//$("#scrollArea").html("还没有任何数据");
-		}			
+			o.append('<a href="javascript:void(0)" onclick="renjian.util.more()" id="more">更多</a>');
+		}		
 	},
-	getStatus: function(dataObj, callback){
-		return $.ajax({
-				url: renjian.api[renjian.curType], 
-				dataType: "json",
-				data: dataObj,
-				username: renjian.userName,
-				password: renjian.password,
-				success: function(arr){
-						callback(arr);
+	getStatus: function(dataObj, callback, tipsObj){
+		if(tipsObj && tipsObj.start){
+			$("#loading").stop().css("opacity", 0.7).html(tipsObj.start).show();
+		}
+		if(renjian.xhr) try{renjian.xhr.abort();}catch(err){}
+		renjian.xhr = $.ajax({
+			url: renjian.api[renjian.curType], 
+			dataType: "json",
+			data: dataObj,
+			username: renjian.userName,
+			password: renjian.password,
+			success: function(arr, status, xhr){
+				if(tipsObj && tipsObj.end){
+					$("#loading").stop().css("opacity", 0.7).html(tipsObj.end).fadeOut(1500);
 				}
+				try{callback(arr, xhr);}catch(e){$("#loading").stop().css("opacity", 0.7).html(e.message);}
+			}
 		});		
 	},
 	checkUpdate: function(){
 		var curType = renjian.curType, arr = Persistence.localStorage.getObject(curType);
-		if(!arr || !arr.length) return;
-		var sinceId = arr[0].id;
-		renjian.xhr = this.getStatus({since_id: sinceId}, function(data){
+		var sinceId = "";
+		if(arr && arr.length) sinceId = arr[0].id;
+		this.getStatus({since_id: sinceId}, function(data, xhr){
 			data = data || [];
 			if(data.length > 1){
 				Array.prototype.unshift.apply(arr, data);
-				//arr.length = renjian.pageSize;
 				Persistence.localStorage.setObject(curType, arr);
 				var ct = $("#" + curType + "List");
-				if(data.length < 5){
-					$.each(data, function(idx, status){
-						$(renjian.util.parseData(status)).hide().prependTo(ct).slideDown();
-					});
-					var serverTime  = new Date(xhr.getResponseHeader("Date")).valueOf();
-					ct.find(".time").each(function(){
-						$(this).html(renjian.util.calRelTime($(this).attr("rel"), serverTime));
-					});
-				}	
-				else
-					renjian.util.createHtml(arr);
+				$.each(data, function(idx, status){
+					$(renjian.util.parseData(status)).hide().prependTo(ct).slideDown();
+				});
+				var serverTime  = new Date(xhr.getResponseHeader("Date")).valueOf();
+				ct.find(".time").each(function(){
+					$(this).html(renjian.util.calRelTime($(this).attr("rel"), serverTime));
+				});
 			}
+		}, {
+			start: "更新检测",
+			end: "检测完成"
+		});
+	},
+	more: function(){
+		var curType = renjian.curType, arr = Persistence.localStorage.getObject(curType);
+		var maxId = "";
+		if(arr && arr.length) maxId = arr[arr.length - 1].id;		
+		this.getStatus({count: renjian.pageSize, max_id: maxId}, function(data){
+			data = data || [];
+			if(data.length > 0){
+				Array.prototype.push.apply(arr, data);
+				Persistence.localStorage.setObject(curType, arr);
+				var ct = $("#" + curType + "List");
+				var ret = $.map(data, function(status, idx){
+					return renjian.util.parseData(status);
+				});
+				ct.append.apply(ct, ret);
+				$("#more").remove();
+				ct.append('<a href="javascript:void(0)" onclick="renjian.util.more()" id="more">更多</a>');
+			}
+		}, {
+			start: "读取更多",
+			end: "读取完成"
 		});
 	},
 	parseData: function(status){
 			var tplObj = {
+				id: status.id,
 				text: renjian.util.fixText(status.text, 140),
 				time: status.relative_date,
 				screenName: status.user.screen_name,
