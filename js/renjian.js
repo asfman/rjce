@@ -75,14 +75,16 @@ renjian.util = {
 				Array.prototype.unshift.apply(arr, data);
 				//arr.length = renjian.pageSize;
 				Persistence.localStorage.setObject(curType, arr);
-				var serverTime  = new Date(xhr.getResponseHeader("Date")).valueOf();
-				$("#" + curType + "List .time").each(function(){
-					$(this).html(renjian.util.calRelTime($(this).attr("rel"), serverTime));
-				});
-				if(data.length < 5)
+				var ct = $("#" + curType + "List");
+				if(data.length < 5){
 					$.each(data, function(idx, status){
 						$(renjian.util.parseData(status)).hide().prependTo(ct).slideDown();
-					});	
+					});
+					var serverTime  = new Date(xhr.getResponseHeader("Date")).valueOf();
+					ct.find(".time").each(function(){
+						$(this).html(renjian.util.calRelTime($(this).attr("rel"), serverTime));
+					});
+				}	
 				else
 					renjian.util.createHtml(arr);
 			}
