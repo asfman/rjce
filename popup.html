@@ -9,6 +9,9 @@
 <script type="text/javascript" src="js/renjian.js?v=32"></script>	
 <script type="text/javascript" src="js/util.js"></script>	
 <script type="text/javascript">
+window.viewName = "popup";
+chrome.browserAction.setBadgeText({text: ""});
+chrome.browserAction.setTitle({title: ""});	
 try{
 	var Persistence = chrome.extension.getBackgroundPage().Persistence;
 	if(Persistence && Persistence.userName().val()){
@@ -16,11 +19,11 @@ try{
 		renjian.password = Persistence.password().val();
 		var loginUser = Persistence.localStorage.getObject("user");
 		$(document).ready(function(){
-			$("#controlPostArea").click(function(){
+			$("#controlPostArea").click(function(e, data){
 				var oPost = $("#postArea"), oImgs = $(this).find("img");
 				var isVisible = oPost.is(':visible');
 				var oldWinHt = window.innerHeight;
-				if(isVisible){
+				if(!data && isVisible){
 					oPost.slideUp(function(){
 						$("#scrollArea").height(466);
 					});
@@ -30,26 +33,43 @@ try{
 						$("#scrollArea").height(466+oldWinHt-window.innerHeight);
 					});
 					oImgs.attr("src", "images/arrow_up.gif");
-					oPost.find("textarea").focus();
+					var oTextarea = oPost.find("textarea");
+					oTextarea.focus();
+					if(data && data.screenName){
+						oTextarea.val('@' + data.screenName + " ");
+						if(data.id) $("#in_reply_to_status_id").val(data.id);
+					}
 				}
 			});			
 			function setActiveCss(){
 				$("#tabs a.active").removeClass("active");
 				$(this).addClass("active");
 			}
-			$("#friendsTab").click(function(){
+			$("#friendsTab").click(function(e, data){
 				renjian.util.getTimeline("friendsTimeline");
+				Persistence.localStorage.removeItem("badget_friendsTimeline");
 				setActiveCss.call(this);
+				$("#fNum").hide();
 				return false;
 			});
 			$("#mentionsTab").click(function(){
 				renjian.util.getTimeline("mentionsTimeline");
+				Persistence.localStorage.removeItem("badget_mentionsTimeline");
 				setActiveCss.call(this);
+				$("#mNum").hide();
 				return false;	
 			});
 			$("#publicTab").click(function(){
 				renjian.util.getTimeline("publicTimeline");
+				Persistence.localStorage.removeItem("badget_publicTimeline");
 				setActiveCss.call(this);
+				return false;
+			});	
+			$("#directMessageTab").click(function(){
+				renjian.util.getTimeline("directMessage");
+				Persistence.localStorage.removeItem("badget_directMessage");
+				setActiveCss.call(this);
+				$("#dNum").hide();
 				return false;
 			});	
 			$("#say").keydown(function(e){
@@ -59,13 +79,17 @@ try{
 				}
 			});
 			$("#postBtn").click(function(){
-				var val = $("#say").val();
+				var val = $("#say").val(), inReplyTo = $("#in_reply_to_status_id");
 				if(!val) return false;
 				$("#loading").html("正在发送...").show();
 				renjian.trace(renjian.userName + "开始发送");
+				sendObj = {text: val, source: "人间大炮"};
+				if(val.indexOf("@") ==0 && inReplyTo.val()){
+					sendObj.in_reply_to_status_id = inReplyTo.val();
+				}
 				$.ajax({
 						type: "POST",
-						data: {text: val, source: "人间大炮"},
+						data: sendObj,
 						url: renjian.api.update,
 						success: function(data, status, xhr){
 							renjian.trace("发送成功");
@@ -73,6 +97,7 @@ try{
 							$("#loading").html("发送成功！");
 						},
 						complete: function(){
+							inReplyTo.val("");
 							$("#loading").fadeOut(1500);
 							renjian.trace("发送完成");
 						}
@@ -82,8 +107,31 @@ try{
 			//init
 			$("#screenName").html(renjian.userName + " ");
 			setTimeout(function(){
-				$("#friendsTab").click();
+				var friendsNum = parseInt(Persistence.localStorage.getItem("badget_mentionsTimeline"),10)||0;
+				if(friendsNum > 0){
+					$("#fNum").html("(" + friendsNum + ")").show();
+				}		
+				var metionNum = parseInt(Persistence.localStorage.getItem("badget_mentionsTimeline"),10)||0;
+				if(metionNum > 0){
+					$("#mNum").html("(" + metionNum + ")").show();
+				}		
+				var directNum = parseInt(Persistence.localStorage.getItem("badget_directMessage"),10)||0;
+				if(directNum > 0){
+					$("#dNum").html("(" + directNum + ")").show();
+				}
+				if(metionNum > 0){
+					$("#mentionsTab").trigger("click");
+				}else if(directNum){
+					$("#directMessageTab").trigger("click");
+				}else{
+					$("#friendsTab").trigger("click");
+				}
 			}, 100);
+			$.ajax({
+				error: function(xhr, status, errMsg){
+					$("#loading").stop().css("opacity", 0.7).html(errMsg);
+				}
+			});
 		});
 	}else{
 		//fk, must delayed to create tab, avoid popup win shows at the same time
@@ -94,6 +142,9 @@ try{
 </script>
 </head>
 <body>
+<div class="hide">
+	<input type="hidden" id="in_reply_to_status_id" />
+</div>	
 <div id="wrap">
 	<div id="head">
 		<div id="postArea" class="hide">
@@ -111,9 +162,10 @@ try{
 		</div>
 	</div>
     <div id="tabs" class="clearfix">
-		    <a class="active friends" id="friendsTab" href="#"><span class="dongtai">动态</span></a>
+		    <a class="active friends" id="friendsTab" href="#"><span class="dongtai">动态<b id="fNum" class="hide red"></b></span></a>
 		    <a id="publicTab" href="#"><span>串门</span></a>
-		    <a id="mentionsTab" href="#"><span class="relative">@我</span></a>
+		    <a id="mentionsTab" href="#"><span class="relative">@我<b id="mNum" class="hide red"></b></span></a>
+		    <a id="directMessageTab" href="#"><span class="relative">悄悄话 <b id="dNum" class="hide red"></b></span></a>
 		    <div id="loading" class="hide">loading...</div>
     </div>
     <div class="scrollArea">

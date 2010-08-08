@@ -17,11 +17,15 @@ Persistence = {
     }
   },
   cleanData: function() {
-	   var l = renjian.typeList.length, key;
+	   var l = renjian.typeList.length, key, badget;
 	   for(var i = 0 ; i < l; i ++){
 		   key = renjian.typeList[i];
+		   badget = "badget_" + key;
 		   if(localStorage.getItem(key)){
 				localStorage.removeItem(key);
+		   }
+		   if(localStorage.getItem(badget)){
+				localStorage.removeItem(badget);
 		   }
 	   }
   }

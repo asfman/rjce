@@ -7,15 +7,16 @@ renjian.util = {
 		mentionsTimeline: "@我",
 		publicTimeline: "串门"
 	},
-	getTimeline: function(curType, force){
+	getTimeline: function(curType, extraObj){
 		try{
 			curType = curType || "friendsTimeline";
+			extraObj = extraObj || {};
 			if(!renjian.api[curType]) return false;
 			renjian.trace("读取" + renjian.util.getTimelineName[curType]);
 			renjian.trace("读取url:" + renjian.api[curType]);
 			renjian.curType = curType;
 			var cacheData = Persistence.localStorage.getObject(curType);
-			if(!force && cacheData && cacheData.length){
+			if(!extraObj.force && cacheData && cacheData.length){
 				renjian.util.createHtml(cacheData);
 				renjian.util.checkUpdate();
 				return false;
@@ -39,19 +40,19 @@ renjian.util = {
 	createHtml: function(cacheData){
 	    var curType = renjian.curType;
 		var arr =  cacheData || Persistence.localStorage.getObject(curType), len = arr.length;
+		var o = $("#scrollArea");
 		if(arr && len){
 			var ret = ["<ul id='" + curType + "List'>"];
 			ret.push($.map(arr, function(status, idx){
 				return renjian.util.parseData(status);
 			}).join(""));
 			ret.push("</ul>");
-			var o = $("#scrollArea");
 			o.empty().html(ret.join(""));
-			o.find(".avatar img").each(function(){
-				this.onerror = chrome.extension.getBackgroundPage().imgOnerror;
-			});
+			this.initEvent(o);
 			o.append('<a href="javascript:void(0)" onclick="renjian.util.more()" id="more">更多</a>');
-		}		
+		}else{
+			o.append("<ul id='" + curType + "List'><li id='nothing'>没有任何数据</li></ul>");
+		}
 	},
 	getStatus: function(dataObj, callback, tipsObj){
 		if(tipsObj && tipsObj.start){
@@ -59,6 +60,12 @@ renjian.util = {
 		}
 		if(renjian.xhr) try{renjian.xhr.abort();}catch(err){}
 		renjian.xhr = $.ajax({
+			beforeSend: function(){
+				var oBackground = chrome.extension.getBackgroundPage();
+				if(oBackground.timerStart && oBackground.timer){
+					oBackground.timerControl(false);
+				}			
+			},
 			url: renjian.api[renjian.curType], 
 			dataType: "json",
 			data: dataObj,
@@ -69,11 +76,17 @@ renjian.util = {
 					$("#loading").stop().css("opacity", 0.7).html(tipsObj.end).fadeOut(1500);
 				}
 				try{callback(arr, xhr);}catch(e){$("#loading").stop().css("opacity", 0.7).html(e.message);}
+			},
+			complete: function(){
+				var oBackground = chrome.extension.getBackgroundPage();
+				if(!oBackground.timerStart){
+					oBackground.timerControl(true);
+				}			
 			}
 		});		
 	},
 	checkUpdate: function(){
-		var curType = renjian.curType, arr = Persistence.localStorage.getObject(curType);
+		var curType = renjian.curType, arr = Persistence.localStorage.getObject(curType)||[];
 		var sinceId = "";
 		if(arr && arr.length) sinceId = arr[0].id;
 		this.getStatus({since_id: sinceId}, function(data, xhr){
@@ -81,22 +94,29 @@ renjian.util = {
 			if(data.length > 1){
 				Array.prototype.unshift.apply(arr, data);
 				Persistence.localStorage.setObject(curType, arr);
-				var ct = $("#" + curType + "List");
-				$.each(data, function(idx, status){
-					$(renjian.util.parseData(status)).hide().prependTo(ct).slideDown();
-				});
-				var serverTime  = new Date(xhr.getResponseHeader("Date")).valueOf();
-				ct.find(".time").each(function(){
-					$(this).html(renjian.util.calRelTime($(this).attr("rel"), serverTime));
-				});
+				renjian.util.updateRecentData(data, curType, xhr);
 			}
 		}, {
 			start: "更新检测",
 			end: "检测完成"
 		});
 	},
+	updateHandler: function(data, curType, xhr){
+		if(curType == renjian.curType){
+			renjian.util.updateRecentData(data, curType, xhr);
+		}else{
+			switch(curType){
+				case "friendsTimeline": 
+					$("#fNum").html("(" + data.length + ")").show();
+				break;
+				case "mentionsTimeline":
+					$("#mNum").html("(" + data.length + ")").show();
+				break;
+			}
+		}	
+	},
 	more: function(){
-		var curType = renjian.curType, arr = Persistence.localStorage.getObject(curType);
+		var curType = renjian.curType, arr = Persistence.localStorage.getObject(curType)||[];
 		var maxId = "";
 		if(arr && arr.length) maxId = arr[arr.length - 1].id;		
 		this.getStatus({count: renjian.pageSize, max_id: maxId}, function(data){
@@ -117,35 +137,74 @@ renjian.util = {
 			end: "读取完成"
 		});
 	},
+	updateRecentData: function(data, curType, xhr){
+		var ct = $("#" + curType + "List");
+		if(!ct.length) return;
+		if($("#nothing").length) $("#nothing").remove();
+		$.each(data, function(idx, status){
+			var o = $(renjian.util.parseData(status)).hide().prependTo(ct);
+			renjian.util.initEvent(o);
+			o.slideDown();
+		});
+		var serverTime  = new Date(xhr.getResponseHeader("Date")).valueOf();
+		ct.find(".time").each(function(){
+			$(this).html(renjian.util.calRelTime($(this).attr("rel"), serverTime));
+		});	
+	},
 	parseData: function(status){
-			var tplObj = {
-				id: status.id,
-				text: renjian.util.fixText(status.text, 140),
-				time: status.relative_date,
-				screenName: status.user.screen_name,
-				avatar: status.user.profile_image_url.replace(/120x120/, "48x48"),
-				createdAt: renjian.util.paseTime(status.created_at)
-			};
-			var sTpl = renjian.statusTplText;
-			if(status.status_type == "LINK"){
-				tplObj.linkTitle = status.link_title;
-				tplObj.linkUrl = status.original_url;
-				sTpl = renjian.statusTplLink;
-			}else if(status.status_type == "PICTURE"){
-				tplObj.picture = status.thumbnail;
-				sTpl = renjian.statusTplPicture;
+			var tplObj = {}, sTpl = "";
+			if(renjian.curType == "directMessage"){
+				tplObj = {
+					id: status.id,
+					text: renjian.util.fixText(status.text, 200),
+					time: status.created_at,
+					avatar: status.sender.profile_image_url.replace(/120x120/, "48x48"),
+					screenName: status.sender.screen_name,
+					createdAt: renjian.util.paseTime(status.created_at),
+					source: status.source					
+				}
+				sTpl = renjian.dmTpl;
+			}else{
+				tplObj = {
+					id: status.id,
+					text: renjian.util.fixText(status.text, 200),
+					time: status.relative_date,
+					screenName: status.user.screen_name,
+					avatar: status.user.profile_image_url.replace(/120x120/, "48x48"),
+					createdAt: renjian.util.paseTime(status.created_at),
+					source: status.source
+				};
+				sTpl = renjian.statusTplText;
+				if(status.status_type == "LINK"){
+					tplObj.linkTitle = status.link_title;
+					tplObj.linkUrl = status.original_url;
+					sTpl = renjian.statusTplLink;
+				}else if(status.status_type == "PICTURE"){
+					tplObj.picture = status.thumbnail;
+					sTpl = renjian.statusTplPicture;
+				}
 			}
 			return  renjian.util.template(sTpl, tplObj);	
 	},
-	clearTimer: function (){
-		$.each(renjian.timer, function(key, val){
-			if(val) clearInterval(val);
-		});
+	initEvent: function(o){
+			o.find(".avatar img").each(function(){
+				this.onerror = chrome.extension.getBackgroundPage().imgOnerror;
+			});	
 	},
 	template: function(str, data){
 		for(var _prop in data){
 			str = str.replace(new RegExp("@{" + _prop + "}", "g"), data[_prop]);
 		}
+		var ifRe = /<#if\s+(.+?)>([\s\S]+?)<\/#if>/g;
+		try{
+			str = str.replace(ifRe, function(al, $1, $2){
+				if(eval("(" + $1 + ")")){
+					return $2;
+				}else{
+					return "";
+				}
+			});
+		}catch(e){$("#loading").html(e.message);}
 		return str.replace(/@{\w+?}/g, "");
 	},
 	fixText: function(source, length){
@@ -162,6 +221,24 @@ renjian.util = {
 		   return text.replace(/[^\x00-\xff]/g,"11").length;
 		}
 		return source;
+	},
+	replyStatus: function(obj){
+		$("#controlPostArea").trigger("click", obj);
+	},
+	deleteStatus: function(id){
+		var oItem = $(this).closest(".item"), curType = renjian.curType;
+		$.post(renjian.api.destroy, {id: id}, function(data){});
+		oItem.fadeOut(function(){
+			oItem.remove();
+		});	
+		var arr = Persistence.localStorage.getObject(curType);
+		for(var i = 0; i < arr.length; i++){
+			if(arr[i].id == id){
+				arr.splice(i, 1);
+				Persistence.localStorage.setObject(curType, arr);
+				break;
+			}	
+		}
 	},
 	calRelTime: function(sTime, eTime){
 		if(!sTime||!eTime) return false;
@@ -195,5 +272,17 @@ renjian.util = {
 		}
 		xhr.send();
 		return serverTime;
-	}
-};
+	},
+	MessageControl: function(){
+		var listners = {};
+		return {
+			addEventListner: function(sType, listner){
+				listners[sType] = listner;
+			},
+			dispatch: function(sType){
+				var handler = listners[sType];
+				if(handler) handler();
+			}
+		};
+	}()	
+}

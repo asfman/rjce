@@ -132,3 +132,9 @@ a:hover {text-decoration: underline;}
 	word-wrap: break-word;
 	word-break: break-all;
 }
+.actionsArea{
+	display: none;
+}
+.item:hover .actionsArea{
+	display: block;
+}

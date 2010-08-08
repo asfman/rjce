@@ -76,7 +76,7 @@ legend{
 		var userName = $("#userName").val(), password = $("#pwd").val();
 		if(!userName || !password) return false;
 		$("#loading").html("正在验证......").removeClass("error").show();
-		//$.post(renjian.api.end_session, function(){});	
+		$.post(renjian.api.end_session, function(){});	
 		$.ajax({
 			type: "POST",
 			dataType: "json",
