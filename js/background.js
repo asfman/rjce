@@ -45,6 +45,7 @@ function timerControl(b){
 		timerStart = false;
 	}
 }
+
 function updateHandler(){
 	$.each(renjian.typeList, function(idx, curType){
 		var arr = Persistence.localStorage.getObject(curType)||[], sinceId = "", noData = false;
