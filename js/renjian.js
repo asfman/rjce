@@ -5,7 +5,8 @@ renjian.util = {
 	getTimelineName: {
 		friendsTimeline: "动态",
 		mentionsTimeline: "@我",
-		publicTimeline: "串门"
+		publicTimeline: "串门",
+		directMessage: "悄悄话"
 	},
 	getTimeline: function(curType, extraObj){
 		try{
@@ -21,12 +22,12 @@ renjian.util = {
 				renjian.util.checkUpdate();
 				return false;
 			}
-			this.getStatus({count: renjian.pageSize}, function(arr){
-				var curType = renjian.curType;
+			this.getStatus({count: renjian.pageSize}, function(arr, xhr ,status){
 				arr = arr || [];
-				Persistence.localStorage.setObject(curType, arr);
+				if(arr.length) Persistence.localStorage.setObject(curType, arr);
 				renjian.trace("解析" + curType + ", 共" + arr.length + "条");
-				renjian.util.createHtml(arr);
+				if(curType == renjian.curType)
+					renjian.util.createHtml(arr);
 			}, {
 				start: "正在读取" +  renjian.util.getTimelineName[curType],
 				end: "读取完成"
@@ -39,9 +40,9 @@ renjian.util = {
 	},
 	createHtml: function(cacheData){
 	    var curType = renjian.curType;
-		var arr =  cacheData || Persistence.localStorage.getObject(curType), len = arr.length;
+		var arr =  cacheData || Persistence.localStorage.getObject(curType);
 		var o = $("#scrollArea");
-		if(arr && len){
+		if(arr && arr.length){
 			var ret = ["<ul id='" + curType + "List'>"];
 			ret.push($.map(arr, function(status, idx){
 				return renjian.util.parseData(status);
@@ -49,7 +50,8 @@ renjian.util = {
 			ret.push("</ul>");
 			o.empty().html(ret.join(""));
 			this.initEvent(o);
-			o.append('<a href="javascript:void(0)" onclick="renjian.util.more()" id="more">更多</a>');
+			if(arr.length >= renjian.pageSize)
+				o.append('<a href="javascript:void(0)" onclick="renjian.util.more()" id="more">更多</a>');
 			this.updateRelativeTime(o, curType);
 		}else{
 			o.empty().append("<ul id='" + curType + "List'><li id='nothing'>没有任何数据</li></ul>");
@@ -74,9 +76,10 @@ renjian.util = {
 			password: renjian.password,
 			success: function(arr, status, xhr){
 				if(tipsObj && tipsObj.end){
-					$("#loading").stop().css("opacity", 0.7).html(tipsObj.end).fadeOut(1500);
+					if($("#loading").html() == tipsObj.start)
+						$("#loading").stop().css("opacity", 0.7).html(tipsObj.end).fadeOut(1500);
 				}
-				try{callback(arr, xhr);}catch(e){$("#loading").stop().css("opacity", 0.7).html(e.message);}
+				try{callback(arr, xhr, status);}catch(e){$("#loading").stop().css("opacity", 0.7).html(e.message);}
 			},
 			complete: function(){
 				var oBackground = chrome.extension.getBackgroundPage();
@@ -128,6 +131,7 @@ renjian.util = {
 				Array.prototype.push.apply(arr, data);
 				Persistence.localStorage.setObject(curType, arr);
 				var ct = $("#" + curType + "List");
+				if(!ct.length) return;
 				var ret = $.map(data, function(status, idx){
 					return renjian.util.parseData(status);
 				});

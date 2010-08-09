@@ -102,6 +102,7 @@ try{
 							inReplyTo.val("");
 							$("#loading").fadeOut(1500);
 							renjian.trace("发送完成");
+							renjian.util.checkUpdate();
 						}
 				});
 				return false;
@@ -114,8 +115,6 @@ try{
 					if(!userLoading.is(":visible")) userLoading.hide();
 					if(!userInfo.is(":visible")) return false;
 					var offset = userInfo.offset(), w = userInfo.outerWidth(true), h = userInfo.outerHeight(true);
-					console.log("window.hv:" + window.hv);
-					console.log(!(e.pageX >= offset.left && e.pageX <= offset.left + w && e.pageY >= offset.top && e.pageY <= offset.top + h));
 					if(!(e.pageX >= offset.left && e.pageX <= offset.left + w && e.pageY >= offset.top && e.pageY <= offset.top + h)){
 						userInfo.fadeOut();
 					}
@@ -124,7 +123,7 @@ try{
 			//init
 			$("#screenName").html(renjian.userName + " ");
 			setTimeout(function(){
-				var friendsNum = parseInt(Persistence.localStorage.getItem("badget_mentionsTimeline"),10)||0;
+				var friendsNum = parseInt(Persistence.localStorage.getItem("badget_friendsTimeline"),10)||0;
 				if(friendsNum > 0){
 					$("#fNum").html("(" + friendsNum + ")").show();
 				}		

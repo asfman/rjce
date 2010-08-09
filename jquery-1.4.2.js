@@ -5161,10 +5161,12 @@ jQuery.extend({
 
 		// Wait for a response to come back
 		var onreadystatechange = xhr.onreadystatechange = function( isTimeout ) {
+			else window.fk = xhr.readyState;
 			// The request was aborted
 			if ( !xhr || xhr.readyState === 0 || isTimeout === "abort" ) {
 				// Opera doesn't call onreadystatechange before this point
 				// so we simulate the call
+				
 				if ( !requestDone ) {
 					complete();
 				}

@@ -47,6 +47,7 @@ function timerControl(b){
 }
 
 function updateHandler(){
+	if(!Persistence.userName().val()) return;
 	$.each(renjian.typeList, function(idx, curType){
 		var arr = Persistence.localStorage.getObject(curType)||[], sinceId = "", noData = false;
 		if(arr.length) sinceId = arr[0].id;
