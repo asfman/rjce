@@ -17,7 +17,8 @@ var renjian = {
 			single_status:	"http://api.renjian.com/statuses/show/@{statusId}.json",
 			destroy: "http://api.renjian.com/statuses/destroy.json",
 			end_session: "http://api.renjian.com/account/end_session.json",
-			update: " http://api.renjian.com/statuses/update.format"
+			update: " http://api.renjian.com/statuses/update.format",
+			user: "http://api.renjian.com/users/show.json"
 	},
 	statusFields: ["id", "created_at", "relative_date", "text", "source", "truncated", "favorited",
 	         "original_url", "status_type", "link_title", "link_desc", "stick", "favoriters",
@@ -25,7 +26,7 @@ var renjian = {
 	statusTplPicture: '\
 		<li class="item status_@{id}">\
 			<div class="avatar">\
-				<img src="@{avatar}" />\
+				<a href="http://renjian.com/@{screenName}" target="_blank"><img rel="@{screenName}" src="@{avatar}" /></a>\
 			</div>\
 			<div class="fr details">\
 				<div class="marginLeft">\
@@ -49,7 +50,7 @@ var renjian = {
 	statusTplText: '\
 		<li class="item status_@{id}">\
 			<div class="avatar">\
-				<img src="@{avatar}" />\
+				<a href="http://renjian.com/@{screenName}" target="_blank"><img rel="@{screenName}" src="@{avatar}" /></a>\
 			</div>\
 			<div class="fr details">\
 				<div class="marginLeft">\
@@ -70,7 +71,7 @@ var renjian = {
 	dmTpl: '\
 		<li class="item status_@{id}">\
 			<div class="avatar">\
-				<img src="@{avatar}" />\
+				<a href="http://renjian.com/@{screenName}" target="_blank"><img rel="@{screenName}" src="@{avatar}" /></a>\
 			</div>\
 			<div class="fr details">\
 				<div class="marginLeft">\
@@ -86,7 +87,7 @@ var renjian = {
 	statusTplLink: '\
 		<li class="item status_@{id}">\
 			<div class="avatar">\
-				<img src="@{avatar}" />\
+				<a href="http://renjian.com/@{screenName}" target="_blank"><img rel="@{screenName}" src="@{avatar}" /></a>\
 			</div>\
 			<div class="fr details">\
 				<div class="marginLeft">\

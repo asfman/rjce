@@ -1,0 +1,25 @@
+#userInfoLoading, #userInfo{
+	position: absolute;
+	-webkit-border-radius: 8px;
+	background-color: #f0f5fb;
+  	border: 1px solid #ccc;	
+}
+.userInfoLoadingCt, .userInfoCt{
+	padding: 6px;
+	word-wrap: break-word;
+	word-break: break-all;
+}
+.userPanel{
+	float: right;
+	width: 100%;
+	margin-left: -135px;
+}
+.userPanelMg{
+	margin-left: 135px;
+}
+.userAvatar{
+	float: left;
+}
+.userAvatar a{
+	display: block;
+}

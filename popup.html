@@ -3,10 +3,12 @@
 <head>
 <meta http-equiv="Content-Type" content="text/html; charset=UTF-8"  />
 <link rel="stylesheet" rev="stylesheet" href="css/common.css" type="text/css" />	
-<link rel="stylesheet" rev="stylesheet" href="css/popup.css?v=6" type="text/css" />
+<link rel="stylesheet" rev="stylesheet" href="css/popup.css" type="text/css" />
+<link rel="stylesheet" rev="stylesheet" href="css/effects.css" type="text/css" />
 <script type="text/javascript" src="js/jquery.js"></script>
+<script type="text/javascript" src="js/extend.js"></script>
 <script type="text/javascript" src="js/config.js"></script>	
-<script type="text/javascript" src="js/renjian.js?v=32"></script>	
+<script type="text/javascript" src="js/renjian.js?v=8"></script>	
 <script type="text/javascript" src="js/util.js"></script>	
 <script type="text/javascript">
 window.viewName = "popup";
@@ -104,6 +106,21 @@ try{
 				});
 				return false;
 			});
+			$(document).mousemove(function(e){
+				if(window.timer) clearTimeout(window.timer);
+				window.timer = setTimeout(function(){
+					if(window.hv) return false;
+					var userInfo = $("#userInfo"), userLoading = $("#userInfoLoading");
+					if(!userLoading.is(":visible")) userLoading.hide();
+					if(!userInfo.is(":visible")) return false;
+					var offset = userInfo.offset(), w = userInfo.outerWidth(true), h = userInfo.outerHeight(true);
+					console.log("window.hv:" + window.hv);
+					console.log(!(e.pageX >= offset.left && e.pageX <= offset.left + w && e.pageY >= offset.top && e.pageY <= offset.top + h));
+					if(!(e.pageX >= offset.left && e.pageX <= offset.left + w && e.pageY >= offset.top && e.pageY <= offset.top + h)){
+						userInfo.fadeOut();
+					}
+				}, 200);
+			});
 			//init
 			$("#screenName").html(renjian.userName + " ");
 			setTimeout(function(){
@@ -171,6 +188,12 @@ try{
     <div class="scrollArea">
 		<div id="scrollArea"><div style="text-align: center; padding-top: 44px;"><img src="images/ajax.gif" /></div></div>
 	</div>	
+</div>
+<div id="userInfoLoading" class="hide">
+	<div id="userInfoLoadingCt" class="userInfoLoadingCt">用户信息加载中...</div>
+</div>
+<div id="userInfo" class="hide">
+	<div id="userInfoCt" class="userInfoCt clearfix"></div>
 </div>
 </body>
 </html>

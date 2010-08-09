@@ -50,6 +50,7 @@ renjian.util = {
 			o.empty().html(ret.join(""));
 			this.initEvent(o);
 			o.append('<a href="javascript:void(0)" onclick="renjian.util.more()" id="more">更多</a>');
+			this.updateRelativeTime(o, curType);
 		}else{
 			o.empty().append("<ul id='" + curType + "List'><li id='nothing'>没有任何数据</li></ul>");
 		}
@@ -122,6 +123,8 @@ renjian.util = {
 		this.getStatus({count: renjian.pageSize, max_id: maxId}, function(data){
 			data = data || [];
 			if(data.length > 0){
+				arr = Persistence.localStorage.getObject(curType)||[];
+				var len = arr.length;				
 				Array.prototype.push.apply(arr, data);
 				Persistence.localStorage.setObject(curType, arr);
 				var ct = $("#" + curType + "List");
@@ -129,8 +132,11 @@ renjian.util = {
 					return renjian.util.parseData(status);
 				});
 				ct.append.apply(ct, ret);
+				renjian.util.initEvent(ct.find(".item:gt(" + len + ")"));
 				$("#more").remove();
-				ct.append('<a href="javascript:void(0)" onclick="renjian.util.more()" id="more">更多</a>');
+				if(data.length == renjian.pageSize)
+					ct.append('<a href="javascript:void(0)" onclick="renjian.util.more()" id="more">更多</a>');
+				renjian.util.updateRelativeTime(ct, curType);
 			}
 		}, {
 			start: "读取更多",
@@ -150,6 +156,7 @@ renjian.util = {
 		ct.find(".time").each(function(){
 			$(this).html(renjian.util.calRelTime($(this).attr("rel"), serverTime));
 		});	
+		this.updateRelativeTime(ct, curType);
 	},
 	parseData: function(status){
 			var tplObj = {}, sTpl = "";
@@ -187,9 +194,71 @@ renjian.util = {
 			return  renjian.util.template(sTpl, tplObj);	
 	},
 	initEvent: function(o){
-			o.find(".avatar img").each(function(){
-				this.onerror = chrome.extension.getBackgroundPage().imgOnerror;
-			});	
+		var xhr = null;
+		o.find(".avatar img").each(function(){
+			this.onerror = chrome.extension.getBackgroundPage().imgOnerror;
+		}).hover(function(){
+			window.hv = true;
+			var offset = $(this).offset(), iTop = offset.top + 10, iHeight = $("#userInfoLoading").outerHeight(true);
+			if(iTop + iHeight > $(window).height()) iTop = $(window).height() -  iHeight - 10;
+			var iLeft = offset.left + 50;
+			var userInfo =$("#userInfo"), userLoading = $("#userInfoLoading");
+			$("#userInfoLoadingCt").html("用户信息加载中...");
+			userLoading.css({
+				left: iLeft,
+				top: iTop,
+				zIndex: $.zIndex++
+			}).fadeIn();
+			if(userInfo.is(":visible")) userInfo.hide();
+			xhr = $.get(renjian.api.user, {id: $(this).attr("rel")}, function(data){
+				data = data || {};
+				if($.isEmptyObject(data)){
+					$("#userInfoLoadingCt").html("用户信息加载失败");
+					return;
+				}else{
+					var tpl = '<div class="userPanel">\
+									<div class="userPanelMg">\
+										<b class="font14">@{screenName}<#if "@{name}".trim() != "@{screenName}"> - @{name}</#if></b>\
+										<p>@{description}</p>\
+										<#if "@{url}" != ""><p><a href="@{url}" target="_blank">@{url}</a></p></#if>\
+										<p class="gray">关注人数：@{followingCount},&#160;&#160;被关注数: @{followersCount}</p>\
+										<p>性别: @{gender},&#160;&#160;id：@{id},&#160;&#160;金币: <b class="red">@{score}</b></p>\
+									</div>\
+							   </div>\
+							   <div class="userAvatar">\
+							   		<a href="http://renjian.com/@{screenName}" target="_blank">\
+							   			<img width="120" height="120" alt="@{screenName}" rel="@{screenName}" src="@{avatar}" />\
+							   		</a>\
+							   </div>';
+					$("#userInfoCt").html(renjian.util.template(tpl, {
+						screenName: data.screen_name,
+						name: data.name,
+						avatar: data.profile_image_url,
+						description: data.description||"",
+						followingCount: data.following_count,
+						followersCount: data.followers_count,
+						url: data.url||"",
+						score: data.score,
+						id: data.id,
+						gender: data.gender == 0 ? "妖": data.gender == 1 ? "男" : "女"
+					}));
+				}
+				userLoading.hide();
+				var iHeight = userInfo.outerHeight(true);
+				var iTop = offset.top + 10;
+				if(iTop + iHeight > $(window).height()) iTop = $(window).height() -  iHeight - 10;
+				userInfo.css({
+					left: iLeft,
+					top: iTop,
+					width: $(window).width() - 130,
+					zIndex: $.zIndex++					
+				}).show();
+			});
+		}, function(e){
+			window.hv = false;
+			if($("#userInfoLoading").is(":visible"))$("#userInfoLoading").fadeOut();
+			if(xhr) xhr.abort();
+		});	
 	},
 	template: function(str, data){
 		for(var _prop in data){
@@ -263,15 +332,28 @@ renjian.util = {
 		var ymd = arr[0].split("-"), hms = arr[1].split(":");
 		return new Date(ymd[0], parseInt(ymd[1],10) - 1, ymd[2], hms[0], hms[1], hms[2]).valueOf();
 	},
-	getServerTime: function(){
-		var serverTime = null;
-		var xhr = new XMLHttpRequest();
-		xhr.open("HEAD", "http://renjian.com", false);
-		xhr.onload = function(){
-			serverTime  = new Date(xhr.getResponseHeader("Date")).valueOf();
+	updateRelativeTime: function(oList, curType){
+		try{
+			if(!oList || !oList.length) return;
+			var serverTime = null;
+			var xhr = new XMLHttpRequest();
+			xhr.open("HEAD", "http://renjian.com", true);
+			curType = curType || renjian.curType;
+			xhr.onload = function(){
+				serverTime  = new Date(xhr.getResponseHeader("Date")).valueOf();
+				oList.find(".time").each(function(){
+					$(this).html(renjian.util.calRelTime($(this).attr("rel"), serverTime));
+				});
+				var arr = Persistence.localStorage.getObject(curType) || [];
+				$.each(arr, function(idx, status){
+					status.relative_date = renjian.util.calRelTime(renjian.util.paseTime(status.created_at), serverTime);
+				});
+				Persistence.localStorage.setObject(curType, arr);
+			}
+			xhr.send();
+		}catch(e){
+			renjian.trace("更新时间发生错误：" + e.message);
 		}
-		xhr.send();
-		return serverTime;
 	},
 	MessageControl: function(){
 		var listners = {};
