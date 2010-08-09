@@ -51,7 +51,7 @@ renjian.util = {
 			this.initEvent(o);
 			o.append('<a href="javascript:void(0)" onclick="renjian.util.more()" id="more">更多</a>');
 		}else{
-			o.append("<ul id='" + curType + "List'><li id='nothing'>没有任何数据</li></ul>");
+			o.empty().append("<ul id='" + curType + "List'><li id='nothing'>没有任何数据</li></ul>");
 		}
 	},
 	getStatus: function(dataObj, callback, tipsObj){

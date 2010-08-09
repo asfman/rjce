@@ -1,6 +1,6 @@
 ﻿{
   "name": "人间大炮",
-  "version": "1.5",
+  "version": "1.5.1",
   "description": "renjian.com chrome extension",
   "browser_action": {
     "default_icon": "images/icon.png",

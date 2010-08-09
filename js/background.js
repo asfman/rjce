@@ -18,7 +18,7 @@ function init(){
 	}, renjian.interval);
 }
 function imgOnerror(){
-	this.src = "images/48x48.jpg";
+	this.src = "images/icon48.png";
 }
 Storage.prototype.setObject = function(key, value){
     this.setItem(key, JSON.stringify(value));
@@ -47,8 +47,9 @@ function timerControl(b){
 }
 function updateHandler(){
 	$.each(renjian.typeList, function(idx, curType){
-		var arr = Persistence.localStorage.getObject(curType)||[], sinceId = "";
-		if(arr && arr.length) sinceId = arr[0].id;	
+		var arr = Persistence.localStorage.getObject(curType)||[], sinceId = "", noData = false;
+		if(arr.length) sinceId = arr[0].id;
+		else noData = true;
 		$.ajax({
 			url: renjian.api[curType], 
 			dataType: "json",
@@ -66,12 +67,12 @@ function updateHandler(){
 					}else{
 						num = data.length;
 					}
-					if(curType != "publicTimeline")
+					if(curType != "publicTimeline" && !noData)
 						localStorage.setItem("badget_" + curType, num);					
 					if(winPopup){
 						winPopup.renjian.util.updateHandler(data, curType, xhr);
 					}else{
-						showTipsText();
+						if(!noData) showTipsText();
 					}
 				}
 			}
