@@ -222,7 +222,7 @@ renjian.util = {
 				}else{
 					var tpl = '<div class="userPanel">\
 									<div class="userPanelMg">\
-										<b class="font14">@{screenName}<#if "@{name}".trim() != "@{screenName}"> - @{name}</#if></b>\
+										<b class="font14">@{screenName}<#if "@{name}".trim() && "@{name}".trim() != "@{screenName}"> - @{name}</#if></b>\
 										<p>@{description}</p>\
 										<#if "@{url}" != ""><p><a href="@{url}" target="_blank">@{url}</a></p></#if>\
 										<p class="gray">关注人数：@{followingCount},&#160;&#160;被关注数: @{followersCount}</p>\
