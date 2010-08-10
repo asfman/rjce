@@ -1,6 +1,7 @@
 #userInfoLoading, #userInfo{
 	position: absolute;
 	-webkit-border-radius: 8px;
+	-webkit-box-shadow: rgba(0, 0, 0, 0.3) 1px 2px 5px;
 	background-color: #f0f5fb;
   	border: 1px solid #ccc;	
 }
