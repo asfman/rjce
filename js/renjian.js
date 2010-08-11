@@ -58,46 +58,57 @@ renjian.util = {
 		}
 	},
 	getStatus: function(dataObj, callback, tipsObj){
-		if(tipsObj && tipsObj.start){
-			$("#loading").stop().css("opacity", 0.7).html(tipsObj.start).show();
-		}
-		if(renjian.xhr) try{renjian.xhr.abort();}catch(err){}
-		renjian.xhr = $.ajax({
-			beforeSend: function(){
-				var oBackground = chrome.extension.getBackgroundPage();
-				if(oBackground.timerStart && oBackground.timer){
-					oBackground.timerControl(false);
-				}			
-			},
-			url: renjian.api[renjian.curType], 
-			dataType: "json",
-			data: dataObj,
-			username: renjian.userName,
-			password: renjian.password,
-			success: function(arr, status, xhr){
-				if(tipsObj && tipsObj.end){
-					if($("#loading").html() == tipsObj.start)
-						$("#loading").stop().css("opacity", 0.7).html(tipsObj.end).fadeOut(1500);
-				}
-				try{callback(arr, xhr, status);}catch(e){$("#loading").stop().css("opacity", 0.7).html(e.message);}
-			},
-			complete: function(){
-				var oBackground = chrome.extension.getBackgroundPage();
-				if(!oBackground.timerStart){
-					oBackground.timerControl(true);
-				}			
+		try{
+			if(tipsObj && tipsObj.start){
+				$("#loading").stop().css("opacity", 0.7).html(tipsObj.start).show();
 			}
-		});		
+			if(renjian.xhr) try{renjian.xhr.abort();}catch(err){}
+			renjian.trace("getStatus读取链接：" + renjian.api[renjian.curType]);
+			renjian.xhr = $.ajax({
+				beforeSend: function(){
+					renjian.trace("开始读取，关闭background自动更新");
+					var oBackground = chrome.extension.getBackgroundPage();
+					if(oBackground.timerStart && oBackground.timer){
+						oBackground.timerControl(false, "popup");
+					}			
+				},
+				url: renjian.api[renjian.curType], 
+				dataType: "json",
+				data: dataObj,
+				username: renjian.userName,
+				password: renjian.password,
+				cache: false,
+				success: function(arr, status, xhr){
+					if(tipsObj && tipsObj.end){
+						if($("#loading").html() == tipsObj.start)
+							$("#loading").stop().css("opacity", 0.7).html(tipsObj.end).fadeOut(1500);
+					}
+					try{callback(arr, xhr, status);}catch(e){$("#loading").stop().css("opacity", 0.7).html(e.message);}
+				},
+				complete: function(){
+					renjian.trace("完成读取，开启background自动更新");
+					var oBackground = chrome.extension.getBackgroundPage();
+					if(!oBackground.timerStart){
+						oBackground.timerControl(true, "popup");
+					}			
+				}
+			});
+		}catch(e){
+			renjian.trace("getStatus出错：" + e.message);
+		}
 	},
 	checkUpdate: function(){
 		var curType = renjian.curType, arr = Persistence.localStorage.getObject(curType)||[];
 		var sinceId = "";
 		if(arr && arr.length) sinceId = arr[0].id;
+		renjian.trace("更新检测");
 		this.getStatus({since_id: sinceId}, function(data, xhr){
 			data = data || [];
-			if(data.length > 1){
+			renjian.trace("更新检测完成，数据长度：" + data.length);
+			if(data.length > 0){
 				Array.prototype.unshift.apply(arr, data);
 				Persistence.localStorage.setObject(curType, arr);
+				renjian.trace("更新显示新数据");
 				renjian.util.updateRecentData(data, curType, xhr);
 			}
 		}, {
@@ -148,18 +159,22 @@ renjian.util = {
 		});
 	},
 	updateRecentData: function(data, curType, xhr){
-		var ct = $("#" + curType + "List");
-		if(!ct.length) return;
-		if($("#nothing").length) $("#nothing").remove();
-		$.each(data, function(idx, status){
-			var o = $(renjian.util.parseData(status)).hide().prependTo(ct);
-			renjian.util.initEvent(o);
-			o.slideDown();
-		});
-		var serverTime  = new Date(xhr.getResponseHeader("Date")).valueOf();
-		ct.find(".time").each(function(){
-			$(this).html(renjian.util.calRelTime($(this).attr("rel"), serverTime));
-		});	
+		try{
+			var ct = $("#" + curType + "List");
+			if(!ct.length) return;
+			if($("#nothing").length) $("#nothing").remove();
+			$.each(data, function(idx, status){
+				var o = $(renjian.util.parseData(status)).hide().prependTo(ct);
+				renjian.util.initEvent(o);
+				o.slideDown();
+			});
+			var serverTime  = new Date(xhr.getResponseHeader("Date")).valueOf();
+			ct.find(".time").each(function(){
+				$(this).html(renjian.util.calRelTime($(this).attr("rel"), serverTime));
+			});	
+		}catch(e){
+			renjian.trace("更新数据出错：" + e);
+		}
 		this.updateRelativeTime(ct, curType);
 	},
 	parseData: function(status){

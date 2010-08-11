@@ -5056,7 +5056,7 @@ jQuery.extend({
 		// Matches an absolute URL, and saves the domain
 		var parts = rurl.exec( s.url ),
 			remote = parts && (parts[1] && parts[1] !== location.protocol || parts[2] !== location.host);
-
+console.log(s.url);
 		// If we're requesting a remote document
 		// and trying to load JSON or Script with a GET
 		if ( s.dataType === "script" && type === "GET" && remote ) {
@@ -5161,7 +5161,6 @@ jQuery.extend({
 
 		// Wait for a response to come back
 		var onreadystatechange = xhr.onreadystatechange = function( isTimeout ) {
-			else window.fk = xhr.readyState;
 			// The request was aborted
 			if ( !xhr || xhr.readyState === 0 || isTimeout === "abort" ) {
 				// Opera doesn't call onreadystatechange before this point

@@ -12,6 +12,7 @@ function init(){
 	setInterval(function(){
 		if(!getView("popup")){
 			if(!timerStart){
+				if(oPopup) oPopup.renjian.trace("background保护自动更新开启");
 				timerControl(true);
 			}
 		}
@@ -36,12 +37,17 @@ Storage.prototype.getObject = function(key){
 }
 //init
 if(Persistence.userName().val()) init();
-function timerControl(b){
+function timerControl(b, actionFrom){
+	var oPopup = getView("popup"), actionFrom = actionFrom ? actionFrom : "background";
 	if(timer) clearInterval(timer);
 	if(b){
+		renjian.trace("自动更新开启");
+		if(oPopup) oPopup.renjian.trace("自动更新开启-from" + actionFrom);
 		timerStart = true;
 		timer = setInterval(updateHandler, renjian.interval);
 	}else{
+		if(oPopup) oPopup.renjian.trace("自动更新关闭-from" + actionFrom);
+		renjian.trace("自动更新关闭");
 		timerStart = false;
 	}
 }
@@ -52,6 +58,9 @@ function updateHandler(){
 		var arr = Persistence.localStorage.getObject(curType)||[], sinceId = "", noData = false;
 		if(arr.length) sinceId = arr[0].id;
 		else noData = true;
+		var oPopup = getView("popup");
+		if(oPopup) oPopup.renjian.trace("background更新检测:" + renjian.api[curType]);
+		renjian.trace("background更新检测:" + renjian.api[curType]);
 		$.ajax({
 			url: renjian.api[curType], 
 			dataType: "json",
