@@ -192,6 +192,7 @@ renjian.util = {
 					sTpl = renjian.statusTplLink;
 				}else if(status.status_type == "PICTURE"){
 					tplObj.picture = status.thumbnail;
+					tplObj.bigPicture = status.original_url;
 					sTpl = renjian.statusTplPicture;
 				}
 			}
@@ -199,6 +200,7 @@ renjian.util = {
 	},
 	initEvent: function(o){
 		var xhr = null;
+		o.find("a.needZoom").showPic();
 		o.find(".avatar img").each(function(){
 			this.onerror = chrome.extension.getBackgroundPage().imgOnerror;
 		}).hover(function(){
@@ -229,10 +231,11 @@ renjian.util = {
 										<p>性别: @{gender},&#160;&#160;id：@{id},&#160;&#160;金币: <b class="red">@{score}</b></p>\
 									</div>\
 							   </div>\
-							   <div class="userAvatar">\
+							   <div class="userAvatar align_ct">\
 							   		<a href="http://renjian.com/@{screenName}" target="_blank">\
 							   			<img width="120" height="120" alt="@{screenName}" rel="@{screenName}" src="@{avatar}" />\
 							   		</a>\
+							   		<#if !@{isFollowing} && Persistence.userName().val() != "@{screenName}"><a class="focus focus_@{id}" onclick="renjian.util.focus.call(this, \'@{senderId}\')" href="javascript:void(0)">关注</a></#if>\
 							   </div>';
 					$("#userInfoCt").html(renjian.util.template(tpl, {
 						screenName: data.screen_name,
@@ -244,7 +247,9 @@ renjian.util = {
 						url: data.url||"",
 						score: data.score,
 						id: data.id,
-						gender: data.gender == 0 ? "妖": data.gender == 1 ? "男" : "女"
+						gender: data.gender == 0 ? "妖": data.gender == 1 ? "男" : "女",
+						isFollowing: data.is_following ? true : false,
+						senderId: data.id
 					}));
 				}
 				userLoading.hide();
@@ -312,6 +317,24 @@ renjian.util = {
 				break;
 			}	
 		}
+	},
+	focus: function(userId){
+		$.ajax({
+			url: renjian.api.follow,
+			type: "POST",
+			dataType: "json",
+			data: {id: userId},
+			username: renjian.userName,
+			password: renjian.password,
+			success: function(data, status, xhr){
+				$("a.focus_" + userId).fadeOut();
+			}
+		});	
+	},
+	closeImg: function(){
+		$("#showImg").fadeOut(function(){
+			$.removeMask();
+		});
 	},
 	calRelTime: function(sTime, eTime){
 		if(!sTime||!eTime) return false;

@@ -58,6 +58,79 @@ $.fn.extend({
 				if(this.tagName == "IMG") e.preventDefault();
 			});
 		});
+	 },
+	 showPic: function(){
+		 this.each(function(){
+			 $(this).click(function(){
+				 var oLoading = $("#loadingImg"), url = $(this).attr("href");
+				 if(!oLoading.length)
+					 oLoading = $("<img id='loadingImg' width='32' height='32' src='images/loading.gif' />").css({
+						 position: "absolute",
+						 left: "50%",
+						 top: "50%",
+						 marginLeft: -16,
+						 marginTop: -16,
+						 zIndex: ++$.zIndex
+					 }).appendTo(document.body);
+				 oLoading.attr("rel", url).show();
+				 var oImg = new Image(), done = false;
+				 oImg.onload = function(){
+					 if(oLoading.attr("rel") != this.src) return;
+					 oLoading.hide();
+					 var oShow = $("#showImg"), w, h;
+					 if(!done){
+						 done = true;
+						 w = this.width;
+						 h = this.height;
+						 if(!oShow.length){
+							 oShow = $("<div/>", {
+								 id: "showImg",
+								 css: {
+								 	 position: "absolute",
+									 left: "50%",
+									 top: "50%",
+									 borderRadius: "8px",
+									 background: "#fff",
+									 padding: "2px 8px 8px",
+									 border: "1px solid #fff",
+								 	 display: "none",
+								 	 minWidth: 200,
+								 	 minHeight: 200
+							 	}
+							 }).appendTo(document.body);
+						}
+						oShow.empty();
+						var limit = {w: $(window).width() - 36, h: $(window).height() - 48};
+						var oldW = w, oldH = h, seeOrg = "";
+						if(w > limit.w){
+							h = parseInt(limit.w*h/w,10)||0;
+							w = limit.w;
+						}
+						if(h > limit.h){
+							w = parseInt(w*limit.h/h,10)||0;
+							h = limit.h;
+						}
+						if(oldW != w || oldH != h) seeOrg = "<a target='_blank' href='" + url + "'>查看原图</a>";
+						$("<div/>", {
+							 height: 22,
+							 lineHeight: 22,
+							 textAlign: "center",
+						}).html("<img alt='close' title='close' onclick='renjian.util.closeImg()' class='fr pointer' src='images/close.gif' />" + seeOrg).prependTo(oShow);						
+						oImg.style.width = w + "px";
+						oImg.style.height = h + "px";
+						$.mask();
+						$("#mask").click(renjian.util.closeImg);
+						oShow.append(oImg).css({
+							marginLeft: -oShow.outerWidth()/2,
+							zIndex: ++$.zIndex,
+							marginTop: -oShow.outerHeight()/2
+						}).fadeIn();
+					 }
+				 }
+				 oImg.src = url;
+				 return false;
+			 });
+		 });
 	 }
 });
 $.extend({
@@ -65,10 +138,10 @@ $.extend({
   mask: function(color, opacity){
 	$.hasMask = true;
 	color = color ? color : "#000";
-	opacity = opacity ? opacity : "0.2";
+	opacity = opacity ? opacity : "0.3";
     width = $(document).width();
 	height = $(document).height();
-	$("<div/>").css({position: "absolute", left: 0, top: 0, zIndex: ++$.zIndex, filter: "alpha(opacity=" + opacity + ")", opacity: opacity, background: color, width: width, height:  height}).appendTo(document.body).attr("id", "mask").css("opacity", opacity).html('<iframe style="position:absolute; z-index: -1; width:100%; height:100%;filter:alpha(opacity=0);opacity:0" frameborder="0"></iframe>');
+	$("<div/>").css({position: "absolute", left: 0, top: 0, zIndex: ++$.zIndex, filter: "alpha(opacity=" + opacity + ")", opacity: opacity, background: color, width: width, height:  height}).appendTo(document.body).attr("id", "mask").css("opacity", opacity);
 	return this;
   },
   removeMask: function(){

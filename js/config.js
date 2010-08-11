@@ -18,7 +18,8 @@ var renjian = {
 			destroy: "http://api.renjian.com/statuses/destroy.json",
 			end_session: "http://api.renjian.com/account/end_session.json",
 			update: " http://api.renjian.com/statuses/update.format",
-			user: "http://api.renjian.com/users/show.json"
+			user: "http://api.renjian.com/users/show.json",
+			follow: "http://api.renjian.com/friendships/create.json"
 	},
 	statusFields: ["id", "created_at", "relative_date", "text", "source", "truncated", "favorited",
 	         "original_url", "status_type", "link_title", "link_desc", "stick", "favoriters",
@@ -32,7 +33,7 @@ var renjian = {
 				<div class="marginLeft">\
 						<div class="text">@{text}</div>\
 						<div class="picture">\
-							<img src="@{picture}" />\
+							<a class="needZoom" href="@{bigPicture}" target="_blank"><img src="@{picture}" /></a>\
 						</div>\
 				</div>\
 			</div>\
