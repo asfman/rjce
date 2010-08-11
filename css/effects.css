@@ -1,7 +1,7 @@
 #userInfoLoading, #userInfo{
 	position: absolute;
 	-webkit-border-radius: 8px;
-	-webkit-box-shadow: rgba(0, 0, 0, 0.3) 1px 2px 5px;
+	-webkit-box-shadow: rgba(0, 0, 0, 0.3) 2px 3px 6px;
 	background-color: #f0f5fb;
   	border: 1px solid #ccc;	
 }
@@ -23,4 +23,24 @@
 }
 .userAvatar a{
 	display: block;
+}
+.normalBtn{
+	-webkit-border-radius: 3px;
+	background: -webkit-gradient(linear, 0% 40%, 0% 70%, from(#F9F9F9), to(#E3E3E3));
+	display: inline-block;
+	border: 1px solid #CCC;
+	color: black;
+	cursor: default;
+	font: normal normal normal 75%/normal arial, sans-serif;
+	margin: 0px 8px 0px 0px;
+	outline: none;
+	padding: 3px 8px;
+	text-align: center;
+	vertical-align: middle;
+	white-space: nowrap;
+	-webkit-user-select: none;
+}
+.normalBtn:hover{
+	border-color: #939393 !important;
+	text-decoration: none;
 }

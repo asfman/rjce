@@ -250,7 +250,7 @@ renjian.util = {
 							   		<a href="http://renjian.com/@{screenName}" target="_blank">\
 							   			<img width="120" height="120" alt="@{screenName}" rel="@{screenName}" src="@{avatar}" />\
 							   		</a>\
-							   		<#if !@{isFollowing} && Persistence.userName().val() != "@{screenName}"><a class="focus focus_@{id}" onclick="renjian.util.focus.call(this, \'@{senderId}\')" href="javascript:void(0)">关注</a></#if>\
+							   		<#if !@{isFollowing} && Persistence.userName().val() != "@{screenName}"><a class="normalBtn focus_@{id}" onclick="renjian.util.focus.call(this, \'@{senderId}\')" href="javascript:void(0)">关注</a></#if>\
 							   </div>';
 					$("#userInfoCt").html(renjian.util.template(tpl, {
 						screenName: data.screen_name,
