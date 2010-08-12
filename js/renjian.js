@@ -8,6 +8,11 @@ renjian.util = {
 		publicTimeline: "串门",
 		directMessage: "悄悄话"
 	},
+	getCurType: function(curType){
+		var ret = renjian.api[curType];
+		if(!ret) ret = null;
+		return ret;
+	},
 	getTimeline: function(curType, extraObj){
 		try{
 			curType = curType || "friendsTimeline";
@@ -66,8 +71,10 @@ renjian.util = {
 			renjian.trace("getStatus读取链接：" + renjian.api[renjian.curType]);
 			renjian.xhr = $.ajax({
 				beforeSend: function(){
+					window.reading = true;
 					renjian.trace("开始读取，关闭background自动更新");
 					var oBackground = chrome.extension.getBackgroundPage();
+					renjian.trace(oBackground ? "getBackgroundPage()：检测自动更新是否开启-" + oBackground.timerStart + "-timer:" + oBackground.timer : "getBackgroundPage()读取失败");
 					if(oBackground.timerStart && oBackground.timer){
 						oBackground.timerControl(false, "popup");
 					}			
@@ -86,8 +93,10 @@ renjian.util = {
 					try{callback(arr, xhr, status);}catch(e){$("#loading").stop().css("opacity", 0.7).html(e.message);}
 				},
 				complete: function(){
+					window.reading = false;
 					renjian.trace("完成读取，开启background自动更新");
 					var oBackground = chrome.extension.getBackgroundPage();
+					renjian.trace(oBackground ? "getBackgroundPage()：检测自动更新是否开启-" + oBackground.timerStart : "getBackgroundPage()读取失败");
 					if(!oBackground.timerStart){
 						oBackground.timerControl(true, "popup");
 					}			
@@ -95,12 +104,13 @@ renjian.util = {
 			});
 		}catch(e){
 			renjian.trace("getStatus出错：" + e.message);
+			window.reading = false;
 		}
 	},
 	checkUpdate: function(){
 		var curType = renjian.curType, arr = Persistence.localStorage.getObject(curType)||[];
 		var sinceId = "";
-		if(arr && arr.length) sinceId = arr[0].id;
+		if(arr.length) sinceId = arr[0].id;
 		renjian.trace("更新检测");
 		this.getStatus({since_id: sinceId}, function(data, xhr){
 			data = data || [];
@@ -116,16 +126,18 @@ renjian.util = {
 			end: "检测完成"
 		});
 	},
-	updateHandler: function(data, curType, xhr){
+	updateHandler: function(data, curType, xhr, noData){
 		if(curType == renjian.curType){
 			renjian.util.updateRecentData(data, curType, xhr);
-		}else{
+		}else if(!noData){
+			var num = parseInt(Persistence.localStorage.getItem("badget_" + curType),10)||0;
+			if(num > 0)
 			switch(curType){
 				case "friendsTimeline": 
-					$("#fNum").html("(" + data.length + ")").show();
+					$("#fNum").html("(" + num + ")").show();
 				break;
 				case "mentionsTimeline":
-					$("#mNum").html("(" + data.length + ")").show();
+					$("#mNum").html("(" + num + ")").show();
 				break;
 			}
 		}	
@@ -324,7 +336,7 @@ renjian.util = {
 		oItem.fadeOut(function(){
 			oItem.remove();
 		});	
-		var arr = Persistence.localStorage.getObject(curType);
+		var arr = Persistence.localStorage.getObject(curType) || [];
 		for(var i = 0; i < arr.length; i++){
 			if(arr[i].id == id){
 				arr.splice(i, 1);

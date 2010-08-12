@@ -1,22 +1,37 @@
-var viewName="background", extensionClicked = true, timerStart = true, timer = 0;
+var viewName="background", extensionClicked = true, timerStart = false, timer = 0;
+$(document).ready(function(){
+	/*自动更新保护程序*/
+	setInterval(function(){
+		if(!Persistence.userName().val()) return;
+		renjian.trace("自动更新保护程序执行");
+		var oPopup = getView("popup");
+		if(!oPopup){
+			if(!timerStart){
+				renjian.trace("自动更新保护程序强制开启自动更新");
+				timerControl(true, "guard");
+			}
+		}else{
+			oPopup.renjian.trace("popup存在，自动更新保护程序执行");
+			if(!oPopup.reading && !timerStart){
+				renjian.trace("自动更新保护程序强制开启自动更新");
+				oPopup.renjian.trace("background保护自动更新开启");
+				timerControl(true, "guard");
+			}else if(timerStart){
+				oPopup.renjian.trace("保护程序检测到自动更新已在运行");
+			}
+		}
+	}, renjian.interval);	
+});
 function init(){
+	if(!Persistence.userName().val()) return;
 	$.each(renjian.typeList, function(idx, curType){
-		var arr = localStorage.getObject(curType);
+		var arr = localStorage.getObject(curType) || [];
 		if(arr.length > renjian.pageSize){
 			arr.length = renjian.pageSize;
 			localStorage.setObject(curType, arr);
 		}	
 	});
 	timerControl(true);
-	/*确保定时器timer正常运行*/
-	setInterval(function(){
-		if(!getView("popup")){
-			if(!timerStart){
-				if(oPopup) oPopup.renjian.trace("background保护自动更新开启");
-				timerControl(true);
-			}
-		}
-	}, renjian.interval);
 }
 function imgOnerror(){
 	this.src = "images/icon48.png";
@@ -36,15 +51,16 @@ Storage.prototype.getObject = function(key){
     return v;
 }
 //init
-if(Persistence.userName().val()) init();
+init();
 function timerControl(b, actionFrom){
 	var oPopup = getView("popup"), actionFrom = actionFrom ? actionFrom : "background";
 	if(timer) clearInterval(timer);
 	if(b){
-		renjian.trace("自动更新开启");
 		if(oPopup) oPopup.renjian.trace("自动更新开启-from" + actionFrom);
 		timerStart = true;
+		if(actionFrom == "guard") updateHandler();
 		timer = setInterval(updateHandler, renjian.interval);
+		renjian.trace("自动更新开启, timer: " + timer);
 	}else{
 		if(oPopup) oPopup.renjian.trace("自动更新关闭-from" + actionFrom);
 		renjian.trace("自动更新关闭");
@@ -54,12 +70,17 @@ function timerControl(b, actionFrom){
 
 function updateHandler(){
 	if(!Persistence.userName().val()) return;
+	var oPopup = getView("popup");
+	if(oPopup) oPopup.renjian.trace("background更新检测updateHandler开始执行");	
 	$.each(renjian.typeList, function(idx, curType){
 		var arr = Persistence.localStorage.getObject(curType)||[], sinceId = "", noData = false;
 		if(arr.length) sinceId = arr[0].id;
 		else noData = true;
 		var oPopup = getView("popup");
-		if(oPopup) oPopup.renjian.trace("background更新检测:" + renjian.api[curType]);
+		if(oPopup){
+			oPopup.renjian.trace("background更新检测:" + renjian.api[curType]);
+			if(oPopup.console && oPopup.console.time) oPopup.console.time(curType);
+		}
 		renjian.trace("background更新检测:" + renjian.api[curType]);
 		$.ajax({
 			url: renjian.api[curType], 
@@ -81,10 +102,18 @@ function updateHandler(){
 					if(curType != "publicTimeline" && !noData)
 						localStorage.setItem("badget_" + curType, num);					
 					if(winPopup){
-						winPopup.renjian.util.updateHandler(data, curType, xhr);
+						winPopup.renjian.trace("读取" + curType + "长度：" + data.length + ", noData:" + noData);
+						winPopup.renjian.util.updateHandler(data, curType, xhr, noData);
 					}else{
 						if(!noData) showTipsText();
 					}
+				}
+			},
+			complete: function(){
+				var oPopup = getView("popup");
+				if(oPopup){
+					oPopup.renjian.trace("background更新检测:" + curType + "完成！");
+					if(oPopup.console && oPopup.console.timeEnd) oPopup.console.timeEnd(curType);
 				}
 			}
 		});	

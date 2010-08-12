@@ -6,10 +6,10 @@
 <link rel="stylesheet" rev="stylesheet" href="css/popup.css" type="text/css" />
 <link rel="stylesheet" rev="stylesheet" href="css/effects.css" type="text/css" />
 <script type="text/javascript" src="js/jquery.js"></script>
-<script type="text/javascript" src="js/extend.js?v=39"></script>
-<script type="text/javascript" src="js/config.js"></script>	
-<script type="text/javascript" src="js/renjian.js?v=13"></script>	
-<script type="text/javascript" src="js/util.js"></script>
+<script type="text/javascript" src="js/extend.js?v=16"></script>
+<script type="text/javascript" src="js/config.js?v=16"></script>	
+<script type="text/javascript" src="js/renjian.js?v=16"></script>	
+<script type="text/javascript" src="js/util.js?v=16"></script>
 <script type="text/javascript">
 window.viewName = "popup";
 chrome.browserAction.setBadgeText({text: ""});
@@ -49,8 +49,8 @@ try{
 			}
 			$("#friendsTab").click(function(e, data){
 				renjian.util.getTimeline("friendsTimeline");
-				Persistence.localStorage.removeItem("badget_friendsTimeline");
 				setActiveCss.call(this);
+				Persistence.localStorage.removeItem("badget_friendsTimeline");
 				$("#fNum").hide();
 				return false;
 			});
@@ -135,13 +135,14 @@ try{
 				if(directNum > 0){
 					$("#dNum").html("(" + directNum + ")").show();
 				}
-				if(metionNum > 0){
-					$("#mentionsTab").trigger("click");
-				}else if(directNum){
-					$("#directMessageTab").trigger("click");
-				}else{
-					$("#friendsTab").trigger("click");
-				}
+//				if(metionNum > 0){
+//					$("#mentionsTab").trigger("click");
+//				}else if(directNum){
+//					$("#directMessageTab").trigger("click");
+//				}else{
+//					$("#friendsTab").trigger("click");
+//				}
+				$("#friendsTab").trigger("click");
 			}, 100);
 			$.ajax({
 				error: function(xhr, status, errMsg){
