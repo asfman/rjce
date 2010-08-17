@@ -7,6 +7,7 @@
 <link rel="stylesheet" rev="stylesheet" href="css/effects.css" type="text/css" />
 <script type="text/javascript" src="js/jquery.js"></script>
 <script type="text/javascript" src="js/extend.js?v=16"></script>
+<script type="text/javascript" src="js/trimpath-template.js?v=16"></script>
 <script type="text/javascript" src="js/config.js?v=16"></script>	
 <script type="text/javascript" src="js/renjian.js?v=16"></script>	
 <script type="text/javascript" src="js/util.js?v=16"></script>
@@ -195,5 +196,88 @@ try{
 <div id="userInfo" class="hide">
 	<div id="userInfoCt" class="userInfoCt clearfix"></div>
 </div>
+<script id="statusTplPicture" type="text/html">
+	<li class="item status_${id}">
+		<div class="avatar">
+			<a href="http://renjian.com/${user.screen_name}" target="_blank"><img alt="${user.screen_name}" rel="${user.screen_name}" src="${user.profile_image_url}" /></a>
+		</div>
+		<div class="fr details">
+			<div class="marginLeft">
+					<div class="text">${renjian.util.fixText(text, renjian.textNum)}</div>
+					<div class="picture">
+						<a class="needZoom" href="${attachment.url}" target="_blank"><img src="${attachment.thumbnail}" /></a>
+					</div>
+			</div>
+		</div>
+		<div class="Clear"></div>
+		<div class="marginLeft extraInfo clearfix">
+			<div class="fr actionsArea">
+				<a onclick="renjian.util.replyStatus({id: ${id}, screenName: '${user.screen_name}'})" href="javascript:void(0)">回应</a>
+				{if screenName == renjian.userName}<a onclick="renjian.util.deleteStatus.call(this, ${id})" href="javascript:void(0)">删除</a{/if}
+			</div>
+			<span class="time" rel="${created_at}">${relative_date}</span> by <a class="screenName" target="_blank" href="http://renjian.com/${user.screen_name}">${user.screen_name}</a>
+			<span>通过${source}</span>
+		</div>
+	</li>
+</script>
+<script id="statusTplText" type="text/html">
+	<li class="item status_${id}">
+		<div class="avatar">
+			<a href="http://renjian.com/${user.screen_name}" target="_blank"><img rel="${user.screen_name}" src="${user.profile_image_url}" /></a>
+		</div>
+		<div class="fr details">
+			<div class="marginLeft">
+					<div class="text">${renjian.util.fixText(text, renjian.textNum)}</div>
+			</div>
+		</div>
+		<div class="Clear"></div>
+		<div class="marginLeft extraInfo clearfix">
+			<div class="fr actionsArea">
+				<a onclick="renjian.util.replyStatus({id: ${id}, screenName: '${user.screen_name}'})" href="javascript:void(0)">回应</a>
+				{if screenName == renjian.userName}<a onclick="renjian.util.deleteStatus.call(this, ${id})" href="javascript:void(0)">删除</a{/if}
+			</div>
+			<span class="time" rel="${created_at}">${relative_date}</span> by <a class="screenName" target="_blank" href="http://renjian.com/${user.screen_name}">${user.screen_name}</a>
+			<span>通过${source}</span>
+		</div>
+	</li>
+</script>
+<script id="dmTpl" type="text/html">
+	<li class="item status_${id}">
+		<div class="avatar">
+			<a href="http://renjian.com/${sender.screen_name}" target="_blank"><img rel="${sender.screen_name}" src="${sender.profile_image_url}" /></a>
+		</div>
+		<div class="fr details">
+			<div class="marginLeft">
+					<div class="text">${renjian.util.fixText(text, renjian.textNum)}</div>
+			</div>
+		</div>
+		<div class="Clear"></div>
+		<div class="marginLeft extraInfo">
+			<span class="time" rel="${created_at}">${created_at}</span> by <a class="screenName" target="_blank" href="http://renjian.com/${sender.screen_name}">${sender.screen_name}</a>
+		</div>
+	</li>
+</script>
+<script id="statusTplLink" type="text/html">
+	<li class="item status_${id}">
+		<div class="avatar">
+			<a href="http://renjian.com/${user.screen_name}" target="_blank"><img rel="${user.screen_name}" src="${user.profile_image_url}" /></a>
+		</div>
+		<div class="fr details">
+			<div class="marginLeft">
+					<div class="text">${renjian.util.fixText(text, renjian.textNum)}</div>
+					<div class="link"><a target="_blank" href="${attachment.url}">${attachment.title}</a></div>
+			</div>
+		</div>
+		<div class="Clear"></div>
+		<div class="marginLeft extraInfo clearfix">
+			<div class="fr actionsArea">
+				<a onclick="renjian.util.replyStatus({id: ${id}, screenName: '${user.screen_name}'})" href="javascript:void(0)">回应</a>
+				{if screenName == renjian.userName}<a onclick="renjian.util.deleteStatus.call(this, ${id})" href="javascript:void(0)">删除</a{/if}
+			</div>
+			<span class="time" rel="${created_at}">${relative_date}</span> by <a class="screenName" target="_blank" href="http://renjian.com/${user.screen_name}">${user.screen_name}</a>
+			<span>通过${source}</span>
+		</div>
+	</li>
+</script>
 </body>
 </html>

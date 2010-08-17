@@ -190,40 +190,27 @@ renjian.util = {
 		this.updateRelativeTime(ct, curType);
 	},
 	parseData: function(status){
-			var tplObj = {}, sTpl = "";
+			var sTpl = "";
 			if(renjian.curType == "directMessage"){
-				tplObj = {
-					id: status.id,
-					text: renjian.util.fixText(status.text, 200),
-					time: status.created_at,
-					avatar: status.sender.profile_image_url.replace(/120x120/, "48x48"),
-					screenName: status.sender.screen_name,
-					createdAt: renjian.util.paseTime(status.created_at),
-					source: status.source					
-				}
-				sTpl = renjian.dmTpl;
+				sTpl = $("#dmTpl").html();
+				status.sender.profile_image_url = status.sender.profile_image_url.replace(/120x120/, "48x48");
 			}else{
-				tplObj = {
-					id: status.id,
-					text: renjian.util.fixText(status.text, 200),
-					time: status.relative_date,
-					screenName: status.user.screen_name,
-					avatar: status.user.profile_image_url.replace(/120x120/, "48x48"),
-					createdAt: renjian.util.paseTime(status.created_at),
-					source: status.source
-				};
-				sTpl = renjian.statusTplText;
-				if(status.status_type == "LINK"){
-					tplObj.linkTitle = status.link_title;
-					tplObj.linkUrl = status.original_url;
-					sTpl = renjian.statusTplLink;
-				}else if(status.status_type == "PICTURE"){
-					tplObj.picture = status.thumbnail;
-					tplObj.bigPicture = status.original_url;
-					sTpl = renjian.statusTplPicture;
+				if(status.attachment){
+					switch(status.attachment.type.toUpperCase()){
+						case "LINK":
+							sTpl = $("#statusTplLink").html();
+						break;
+						case "PICTURE":
+							sTpl = $("#statusTplPicture").html();
+						break;
+					}
+				}else{//text type
+					sTpl = $("#statusTplText").html();
 				}
+				status.user.profile_image_url = status.user.profile_image_url.replace(/120x120/, "48x48");
 			}
-			return  renjian.util.template(sTpl, tplObj);	
+			status.created_at = this.paseTime(status.created_at);
+			return  TrimPath.parseTemplate(sTpl).process(status);	
 	},
 	initEvent: function(o){
 		var xhr = null;
