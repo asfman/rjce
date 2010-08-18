@@ -25,6 +25,7 @@ renjian.util = {
 			if(!extraObj.force && cacheData && cacheData.length){
 				renjian.util.createHtml(cacheData);
 				renjian.util.checkUpdate();
+				$("#scrollArea").scrollTop(0);
 				return false;
 			}
 			this.getStatus({count: renjian.pageSize}, function(arr, xhr ,status){
@@ -38,7 +39,6 @@ renjian.util = {
 				end: "读取完成"
 			});
 		}catch(e){
-			alert(e);
 			renjian.trace("error:" + e.message);
 		}
 		return false;
@@ -70,20 +70,19 @@ renjian.util = {
 			if(renjian.xhr) try{renjian.xhr.abort();}catch(err){}
 			renjian.trace("getStatus读取链接：" + renjian.api[renjian.curType]);
 			renjian.xhr = $.ajax({
-				beforeSend: function(){
+				beforeSend: function(xhr){
+					renjian.beforeSend(xhr);
 					window.reading = true;
 					renjian.trace("开始读取，关闭background自动更新");
 					var oBackground = chrome.extension.getBackgroundPage();
 					renjian.trace(oBackground ? "getBackgroundPage()：检测自动更新是否开启-" + oBackground.timerStart + "-timer:" + oBackground.timer : "getBackgroundPage()读取失败");
 					if(oBackground.timerStart && oBackground.timer){
 						oBackground.timerControl(false, "popup");
-					}			
+					}
 				},
 				url: renjian.api[renjian.curType], 
 				dataType: "json",
 				data: dataObj,
-				username: renjian.userName,
-				password: renjian.password,
 				cache: false,
 				success: function(arr, status, xhr){
 					if(tipsObj && tipsObj.end){
@@ -92,7 +91,7 @@ renjian.util = {
 					}
 					try{callback(arr, xhr, status);}catch(e){$("#loading").stop().css("opacity", 0.7).html(e.message);}
 				},
-				complete: function(){
+				complete: function(xhr){
 					window.reading = false;
 					renjian.trace("完成读取，开启background自动更新");
 					var oBackground = chrome.extension.getBackgroundPage();
@@ -190,9 +189,10 @@ renjian.util = {
 		this.updateRelativeTime(ct, curType);
 	},
 	parseData: function(status){
-			var sTpl = "";
+			var sTpl = "", oUserInfo = {};
 			if(renjian.curType == "directMessage"){
 				sTpl = $("#dmTpl").html();
+				$.extend(oUserInfo, status.sender);
 				status.sender.profile_image_url = status.sender.profile_image_url.replace(/120x120/, "48x48");
 			}else{
 				if(status.attachment){
@@ -205,82 +205,47 @@ renjian.util = {
 						break;
 					}
 				}else{//text type
-					sTpl = $("#statusTplText").html();
+					if(status.forwarded_status){
+						sTpl = $("#statusTplZt").html();
+					}else
+						sTpl = $("#statusTplText").html();
 				}
+				$.extend(oUserInfo, status.user);
 				status.user.profile_image_url = status.user.profile_image_url.replace(/120x120/, "48x48");
 			}
+			status.userInfo = encodeURIComponent(JSON.stringify(oUserInfo));
 			status.created_at = this.paseTime(status.created_at);
-			return  TrimPath.parseTemplate(sTpl).process(status);	
+			var ret = "";
+			try{
+				ret = TrimPath.parseTemplate(sTpl).process(status, {throwExceptions: true});
+			}catch(e){renjian.trace(renjian.curType + "模板解析出错:" + e);}	
+			return ret;	
 	},
 	initEvent: function(o){
-		var xhr = null;
 		o.find("a.needZoom").showPic();
 		o.find(".avatar img").each(function(){
 			this.onerror = chrome.extension.getBackgroundPage().imgOnerror;
 		}).hover(function(){
 			window.hv = true;
-			var offset = $(this).offset(), iTop = offset.top + 10, iHeight = $("#userInfoLoading").outerHeight(true);
+			var offset = $(this).offset(), iTop = offset.top + 10, iLeft = offset.left + 50;
+			var userInfo =$("#userInfo");
+			if(userInfo.is(":visible")) userInfo.hide();
+			var oUserInfo = JSON.parse(decodeURIComponent($(this).attr("rel"))), ret = "";
+			try{
+				ret = TrimPath.parseTemplate($("#userInfoTpl").html()).process(oUserInfo, {throwExceptions: true})
+			}catch(e){renjian.trace("userInfoTpl模板解析出错:" + e);}
+			if(!ret) return;
+			$("#userInfoCt").html(ret);
+			var iHeight = userInfo.outerHeight(true);
 			if(iTop + iHeight > $(window).height()) iTop = $(window).height() -  iHeight - 10;
-			var iLeft = offset.left + 50;
-			var userInfo =$("#userInfo"), userLoading = $("#userInfoLoading");
-			$("#userInfoLoadingCt").html("用户信息加载中...");
-			userLoading.css({
+			userInfo.css({
 				left: iLeft,
 				top: iTop,
-				zIndex: $.zIndex++
-			}).fadeIn();
-			if(userInfo.is(":visible")) userInfo.hide();
-			xhr = $.get(renjian.api.user, {id: $(this).attr("rel")}, function(data){
-				data = data || {};
-				if($.isEmptyObject(data)){
-					$("#userInfoLoadingCt").html("用户信息加载失败");
-					return;
-				}else{
-					var tpl = '<div class="userPanel">\
-									<div class="userPanelMg">\
-										<b class="font14">@{screenName}<#if "@{name}".trim() && "@{name}".trim() != "@{screenName}"> - @{name}</#if></b>\
-										<p>@{description}</p>\
-										<#if "@{url}" != ""><p><a href="@{url}" target="_blank">@{url}</a></p></#if>\
-										<p class="gray">关注人数：@{followingCount},&#160;&#160;被关注数: @{followersCount}</p>\
-										<p>性别: @{gender},&#160;&#160;id：@{id},&#160;&#160;金币: <b class="red">@{score}</b></p>\
-									</div>\
-							   </div>\
-							   <div class="userAvatar align_ct">\
-							   		<a href="http://renjian.com/@{screenName}" target="_blank">\
-							   			<img width="120" height="120" alt="@{screenName}" rel="@{screenName}" src="@{avatar}" />\
-							   		</a>\
-							   		<#if !@{isFollowing} && Persistence.userName().val() != "@{screenName}"><a class="normalBtn focus_@{id}" onclick="renjian.util.focus.call(this, \'@{senderId}\')" href="javascript:void(0)">关注</a></#if>\
-							   </div>';
-					$("#userInfoCt").html(renjian.util.template(tpl, {
-						screenName: data.screen_name,
-						name: data.name,
-						avatar: data.profile_image_url,
-						description: data.description||"",
-						followingCount: data.following_count,
-						followersCount: data.followers_count,
-						url: data.url||"",
-						score: data.score,
-						id: data.id,
-						gender: data.gender == 0 ? "妖": data.gender == 1 ? "男" : "女",
-						isFollowing: data.is_following ? true : false,
-						senderId: data.id
-					}));
-				}
-				userLoading.hide();
-				var iHeight = userInfo.outerHeight(true);
-				var iTop = offset.top + 10;
-				if(iTop + iHeight > $(window).height()) iTop = $(window).height() -  iHeight - 10;
-				userInfo.css({
-					left: iLeft,
-					top: iTop,
-					width: $(window).width() - 130,
-					zIndex: $.zIndex++					
-				}).show();
-			});
+				width: $(window).width() - 130,
+				zIndex: $.zIndex++					
+			}).fadeIn();			
 		}, function(e){
 			window.hv = false;
-			if($("#userInfoLoading").is(":visible"))$("#userInfoLoading").fadeOut();
-			if(xhr) xhr.abort();
 		});	
 	},
 	template: function(str, data){
@@ -299,23 +264,51 @@ renjian.util = {
 		}catch(e){$("#loading").html(e.message);}
 		return str.replace(/@{\w+?}/g, "");
 	},
-	fixText: function(source, length){
-		if(charCount(source) > length)
-		{
-			while(charCount(source) > length - 3)
-			{
-				source = source.slice(0, -1);
-			}
-			while(charCount(source) < length) source += ".";
-		}
-		function charCount(text)
-		{
-		   return text.replace(/[^\x00-\xff]/g,"11").length;
-		}
-		return source;
-	},
 	replyStatus: function(obj){
 		$("#controlPostArea").trigger("click", obj);
+	},
+	ztStatus: function(obj){
+		var sTpl = $("#ztWinTpl").html(), ret = "";
+		try{
+			ret = TrimPath.parseTemplate(sTpl).process({
+				title: "转发" + obj.screenName + "的内容"
+			}, {throwExceptions: true});
+		}catch(e){renjian.trace("转发模板解析出错:" + e);}
+		if(!ret) return;
+		var oWin = $(ret).hide();
+		oWin.appendTo(document.body);
+		$.mask();
+		oWin.center().fadeIn();
+		$("#ztButton").click(this.ztHandler(obj, oWin));
+		$("#ztWinClose").click(this.ztClose);
+	},
+	ztClose: function(){
+		$("#ztWin").fadeOut(function(){
+			$(this).remove();
+			$.removeMask()
+		});
+		return false;
+	},
+	ztHandler: function(obj, oWin){
+		return function(e){
+			var sText = oWin.find("textarea").val();
+			$.ajax({
+				url: renjian.api.zt,
+				type: "POST",
+				data: {id: obj.id, text: sText},
+				success: function(){
+					$("#loading").html("转发成功！").show().fadeOut(3000);
+					renjian.util.checkUpdate();
+				},
+				error: function(xhr, status, e){
+					$("#loading").html("转发错误了: " + xhr.status).show().fadeOut(3000);
+				},
+				complete: function(){
+					$("#ztWinClose").click();
+				}
+			});
+			return false;
+		};
 	},
 	deleteStatus: function(id){
 		var oItem = $(this).closest(".item"), curType = renjian.curType;
@@ -340,7 +333,7 @@ renjian.util = {
 			data: {id: userId},
 			username: renjian.userName,
 			password: renjian.password,
-			success: function(data, status, xhr){
+			complete: function(xhr){
 				$("a.focus_" + userId).fadeOut();
 			}
 		});	

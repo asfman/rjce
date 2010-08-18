@@ -19,7 +19,8 @@ var renjian = {
 			end_session: "http://api.renjian.com/v2/account/end_session.json",
 			update: " http://api.renjian.com/v2/statuses/update.format",
 			user: "http://api.renjian.com/v2/users/show.json",
-			follow: "http://api.renjian.com/v2/friendships/create.json"
+			follow: "http://api.renjian.com/v2/friendships/create.json",
+			zt: "http://api.renjian.com/v2/statuses/forward.json"
 	},
 	statusFields: ["id", "text", "source", "truncated", "created_at", "relative_date", "liked",
 	         "likers", "liker_count", "forwarded", "forwarders", "forwarder_count", "conversation_count",
@@ -27,8 +28,22 @@ var renjian = {
 	typeList: ["friendsTimeline", "mentionsTimeline", "publicTimeline", "directMessage"],
 	curType: "",
 	timer: {},
-	interval: 8000,
+	interval: 15000,
 	pageSize: 20,
 	textNum: 200,
-	xhr: null
+	xhr: null,
+	timeout: 6000,
+	error: function(xhr, status, e){
+		switch(status){
+			case "timeout":
+				$("#loading").html("ajax读取超时错误...");
+			break;
+			default:
+				$("#loading").html("ajax读取错误...");
+		}
+		$("#loading").fadeOut();		
+	},
+	beforeSend: function(xhr){
+		xhr.setRequestHeader("Authorization", "Basic " + Base64.encode(renjian.userName + ":" + renjian.password));
+	}
 };

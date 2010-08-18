@@ -3,14 +3,15 @@
 <head>
 <meta http-equiv="Content-Type" content="text/html; charset=UTF-8"  />
 <link rel="stylesheet" rev="stylesheet" href="css/common.css" type="text/css" />	
-<link rel="stylesheet" rev="stylesheet" href="css/popup.css" type="text/css" />
-<link rel="stylesheet" rev="stylesheet" href="css/effects.css" type="text/css" />
+<link rel="stylesheet" rev="stylesheet" href="css/popup.css?v=20" type="text/css" />
+<link rel="stylesheet" rev="stylesheet" href="css/effects.css?v=20" type="text/css" />
 <script type="text/javascript" src="js/jquery.js"></script>
-<script type="text/javascript" src="js/extend.js?v=18"></script>
-<script type="text/javascript" src="js/trimpath-template.js?v=18"></script>
-<script type="text/javascript" src="js/config.js?v=18"></script>	
-<script type="text/javascript" src="js/renjian.js?v=18"></script>	
-<script type="text/javascript" src="js/util.js?v=18"></script>
+<script type="text/javascript" src="js/extend.js?v=20"></script>
+<script type="text/javascript" src="js/Base64.js?v=20"></script>
+<script type="text/javascript" src="js/trimpath-template.js?v=20"></script>
+<script type="text/javascript" src="js/config.js?v=20"></script>	
+<script type="text/javascript" src="js/renjian.js?v=20"></script>	
+<script type="text/javascript" src="js/util.js?v=20"></script>
 <script type="text/javascript">
 window.viewName = "popup";
 chrome.browserAction.setBadgeText({text: ""});
@@ -20,6 +21,15 @@ try{
 	if(Persistence && Persistence.userName().val()){
 		renjian.userName = Persistence.userName().val();
 		renjian.password = Persistence.password().val();
+		$.ajaxSetup({
+			beforeSend: function(xhr){
+				renjian.beforeSend(xhr);
+			},
+			error: function(xhr, status, e){
+				renjian.error(xhr, status, e);
+			},
+			timeout: renjian.timeout
+		});
 		var loginUser = Persistence.localStorage.getObject("user");
 		$(document).ready(function(){
 			$("#controlPostArea").click(function(e, data){
@@ -112,8 +122,7 @@ try{
 				if(window.timer) clearTimeout(window.timer);
 				window.timer = setTimeout(function(){
 					if(window.hv) return false;
-					var userInfo = $("#userInfo"), userLoading = $("#userInfoLoading");
-					if(!userLoading.is(":visible")) userLoading.hide();
+					var userInfo = $("#userInfo");
 					if(!userInfo.is(":visible")) return false;
 					var offset = userInfo.offset(), w = userInfo.outerWidth(true), h = userInfo.outerHeight(true);
 					if(!(e.pageX >= offset.left && e.pageX <= offset.left + w && e.pageY >= offset.top && e.pageY <= offset.top + h)){
@@ -162,7 +171,7 @@ try{
 <body>
 <div class="hide">
 	<input type="hidden" id="in_reply_to_status_id" />
-</div>	
+</div>
 <div id="wrap">
 	<div id="head">
 		<div id="postArea" class="hide">
@@ -199,11 +208,11 @@ try{
 <script id="statusTplPicture" type="text/html">
 	<li class="item status_${id}">
 		<div class="avatar">
-			<a href="http://renjian.com/${user.screen_name}" target="_blank"><img alt="${user.screen_name}" rel="${user.screen_name}" src="${user.profile_image_url}" /></a>
+			<a href="http://renjian.com/${user.screen_name}" target="_blank"><img alt="${user.screen_name}" rel="${userInfo}" src="${user.profile_image_url}" /></a>
 		</div>
 		<div class="fr details">
 			<div class="marginLeft">
-					<div class="text">${renjian.util.fixText(text, renjian.textNum)}</div>
+					<div class="text">${fixText(text, renjian.textNum)}</div>
 					<div class="picture">
 						<a class="needZoom" href="${attachment.url}" target="_blank"><img src="${attachment.thumbnail}" /></a>
 					</div>
@@ -213,6 +222,41 @@ try{
 		<div class="marginLeft extraInfo clearfix">
 			<div class="fr actionsArea">
 				<a onclick="renjian.util.replyStatus({id: ${id}, screenName: '${user.screen_name}'})" href="javascript:void(0)">回应</a>
+				<a onclick="renjian.util.ztStatus({id: ${id}, screenName: '${user.screen_name}'})" href="javascript:void(0)">转发</a>
+				{if screenName == renjian.userName}<a onclick="renjian.util.deleteStatus.call(this, ${id})" href="javascript:void(0)">删除</a{/if}
+			</div>
+			<span class="time" rel="${created_at}">${relative_date}</span> by <a class="screenName" target="_blank" href="http://renjian.com/${user.screen_name}">${user.screen_name}</a>
+			<span>通过${source}</span>
+		</div>
+	</li>
+</script>
+<script id="statusTplZt" type="text/html">
+	<li class="item status_${id}">
+		<div class="avatar">
+			<a href="http://renjian.com/${user.screen_name}" target="_blank"><img alt="${user.screen_name}" rel="${userInfo}" src="${user.profile_image_url}" /></a>
+		</div>
+		<div class="fr details">
+			<div class="marginLeft">
+					<div class="text">{if text.trim()!=""}${fixText(text, renjian.textNum)}{else}转发鸟：{/if}</div>
+					<div class="ztCt relative">
+						<div class="ztArrow"></div>
+						{if forwarded_status.text}<div class="ztText">${fixText(forwarded_status.text, renjian.textNum)}</div>{/if}
+						{if forwarded_status.attachment && forwarded_status.attachment.type == "PICTURE"}
+							<div class="ztPic">
+								<a class="needZoom" href="${forwarded_status.attachment.url}" target="_blank"><img src="${forwarded_status.attachment.thumbnail}" /></a>
+							</div>
+						{/if}
+						{if forwarded_status.attachment && forwarded_status.attachment.type == "LINK"}
+							<div class="ztLink"><a target="_blank" href="${forwarded_status.attachment.url}">${forwarded_status.attachment.title}</a></div>
+						{/if}
+					</div>
+			</div>
+		</div>
+		<div class="Clear"></div>
+		<div class="marginLeft extraInfo clearfix">
+			<div class="fr actionsArea">
+				<a onclick="renjian.util.replyStatus({id: ${id}, screenName: '${user.screen_name}'})" href="javascript:void(0)">回应</a>
+				<a onclick="renjian.util.ztStatus({id: ${id}, screenName: '${user.screen_name}'})" href="javascript:void(0)">转发</a>
 				{if screenName == renjian.userName}<a onclick="renjian.util.deleteStatus.call(this, ${id})" href="javascript:void(0)">删除</a{/if}
 			</div>
 			<span class="time" rel="${created_at}">${relative_date}</span> by <a class="screenName" target="_blank" href="http://renjian.com/${user.screen_name}">${user.screen_name}</a>
@@ -223,17 +267,18 @@ try{
 <script id="statusTplText" type="text/html">
 	<li class="item status_${id}">
 		<div class="avatar">
-			<a href="http://renjian.com/${user.screen_name}" target="_blank"><img rel="${user.screen_name}" src="${user.profile_image_url}" /></a>
+			<a href="http://renjian.com/${user.screen_name}" target="_blank"><img alt="${user.screen_name}" rel="${userInfo}" src="${user.profile_image_url}" /></a>
 		</div>
 		<div class="fr details">
 			<div class="marginLeft">
-					<div class="text">${renjian.util.fixText(text, renjian.textNum)}</div>
+					<div class="text">${fixText(text, renjian.textNum)}</div>
 			</div>
 		</div>
 		<div class="Clear"></div>
 		<div class="marginLeft extraInfo clearfix">
 			<div class="fr actionsArea">
 				<a onclick="renjian.util.replyStatus({id: ${id}, screenName: '${user.screen_name}'})" href="javascript:void(0)">回应</a>
+				<a onclick="renjian.util.ztStatus({id: ${id}, screenName: '${user.screen_name}'})" href="javascript:void(0)">转发</a>
 				{if screenName == renjian.userName}<a onclick="renjian.util.deleteStatus.call(this, ${id})" href="javascript:void(0)">删除</a{/if}
 			</div>
 			<span class="time" rel="${created_at}">${relative_date}</span> by <a class="screenName" target="_blank" href="http://renjian.com/${user.screen_name}">${user.screen_name}</a>
@@ -244,11 +289,11 @@ try{
 <script id="dmTpl" type="text/html">
 	<li class="item status_${id}">
 		<div class="avatar">
-			<a href="http://renjian.com/${sender.screen_name}" target="_blank"><img rel="${sender.screen_name}" src="${sender.profile_image_url}" /></a>
+			<a href="http://renjian.com/${sender.screen_name}" target="_blank"><img alt="${sender.screen_name}" rel="${userInfo}" src="${sender.profile_image_url}" /></a>
 		</div>
 		<div class="fr details">
 			<div class="marginLeft">
-					<div class="text">${renjian.util.fixText(text, renjian.textNum)}</div>
+					<div class="text">${fixText(text, renjian.textNum)}</div>
 			</div>
 		</div>
 		<div class="Clear"></div>
@@ -260,11 +305,11 @@ try{
 <script id="statusTplLink" type="text/html">
 	<li class="item status_${id}">
 		<div class="avatar">
-			<a href="http://renjian.com/${user.screen_name}" target="_blank"><img rel="${user.screen_name}" src="${user.profile_image_url}" /></a>
+			<a href="http://renjian.com/${user.screen_name}" target="_blank"><img alt="${user.screen_name}" rel="${userInfo}" src="${user.profile_image_url}" /></a>
 		</div>
 		<div class="fr details">
 			<div class="marginLeft">
-					<div class="text">${renjian.util.fixText(text, renjian.textNum)}</div>
+					<div class="text">${fixText(text, renjian.textNum)}</div>
 					<div class="link"><a target="_blank" href="${attachment.url}">${attachment.title}</a></div>
 			</div>
 		</div>
@@ -272,12 +317,44 @@ try{
 		<div class="marginLeft extraInfo clearfix">
 			<div class="fr actionsArea">
 				<a onclick="renjian.util.replyStatus({id: ${id}, screenName: '${user.screen_name}'})" href="javascript:void(0)">回应</a>
+				<a onclick="renjian.util.ztStatus({id: ${id}, screenName: '${user.screen_name}'})" href="javascript:void(0)">转发</a>
 				{if screenName == renjian.userName}<a onclick="renjian.util.deleteStatus.call(this, ${id})" href="javascript:void(0)">删除</a{/if}
 			</div>
 			<span class="time" rel="${created_at}">${relative_date}</span> by <a class="screenName" target="_blank" href="http://renjian.com/${user.screen_name}">${user.screen_name}</a>
 			<span>通过${source}</span>
 		</div>
 	</li>
+</script>
+<script id="userInfoTpl" type="text/html">
+	<div class="userPanel">
+		<div class="userPanelMg">
+			<b class="font14">${screen_name}{if name.trim() && name.trim() != screen_name} - ${name}{/if}</b>
+			{if defined("description")}<p>${description}</p>{/if}
+			{if defined("url") && url.trim() != ""}<p><a href="${url}" target="_blank">${url}</a></p>{/if}
+			<p class="gray">关注人数：${following_count},&#160;&#160;被关注数: ${followers_count}</p>
+			<p>性别: ${gender?gender==1?"男":"女":"妖怪"},&#160;&#160;id：${id},&#160;&#160;金币: <b class="red">${score}</b></p>
+		</div>
+	</div>
+	<div class="userAvatar align_ct">
+			<a href="http://renjian.com/${screen_name}" target="_blank">
+				<img width="120" height="120" alt="${screen_name}" rel="${screen_name}" src="${profile_image_url}" />
+			</a>
+			{if !is_following && Persistence.userName().val() != screen_name}<a class="normalBtn focus_${id}" onclick="renjian.util.focus.call(this, ${id})" href="javascript:void(0)">关注</a>{/if}
+	</div>
+</script>
+<script id="ztWinTpl" type="text/html">
+	<div id="ztWin" class="ztWin">
+		<a id="ztWinClose" class="ztWinClose" href="javascript:void(0)"></a>
+		<div class="ztWinPd">
+			<div class="ztWinTitle">${title}</div>
+			<div class="ztWinCt">
+				<textarea></textarea>
+			</div>
+			<div class="ztWinAction clearfix">
+				<input id="ztButton" type="button" value="转发" class="ztButton">
+			</div>
+		</div>	
+	</div>
 </script>
 </body>
 </html>

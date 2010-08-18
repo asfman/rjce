@@ -3,7 +3,6 @@ $(document).ready(function(){
 	/*自动更新保护程序*/
 	setInterval(function(){
 		if(!Persistence.userName().val()) return;
-		renjian.trace("自动更新保护程序执行");
 		var oPopup = getView("popup");
 		if(!oPopup){
 			if(!timerStart){
@@ -13,7 +12,6 @@ $(document).ready(function(){
 		}else{
 			oPopup.renjian.trace("popup存在，自动更新保护程序执行");
 			if(!oPopup.reading && !timerStart){
-				renjian.trace("自动更新保护程序强制开启自动更新");
 				oPopup.renjian.trace("background保护自动更新开启");
 				timerControl(true, "guard");
 			}else if(timerStart){
@@ -60,10 +58,8 @@ function timerControl(b, actionFrom){
 		timerStart = true;
 		if(actionFrom == "guard") updateHandler();
 		timer = setInterval(updateHandler, renjian.interval);
-		renjian.trace("自动更新开启, timer: " + timer);
 	}else{
 		if(oPopup) oPopup.renjian.trace("自动更新关闭-from" + actionFrom);
-		renjian.trace("自动更新关闭");
 		timerStart = false;
 	}
 }
@@ -71,7 +67,14 @@ function timerControl(b, actionFrom){
 function updateHandler(){
 	if(!Persistence.userName().val()) return;
 	var oPopup = getView("popup");
-	if(oPopup) oPopup.renjian.trace("background更新检测updateHandler开始执行");	
+	if(oPopup){
+		oPopup.renjian.trace("background更新检测updateHandler开始执行");	
+		if(!window.startTime) window.startTime = new Date().getTime();
+		else{
+			oPopup.renjian.trace("执行相隔时间：" + (new Date().getTime() - window.startTime));
+			window.startTime = new Date().getTime();
+		}		
+	}
 	$.each(renjian.typeList, function(idx, curType){
 		var arr = Persistence.localStorage.getObject(curType)||[], sinceId = "", noData = false;
 		if(arr.length) sinceId = arr[0].id;
@@ -81,7 +84,6 @@ function updateHandler(){
 			oPopup.renjian.trace("background更新检测:" + renjian.api[curType]);
 			if(oPopup.console && oPopup.console.time) oPopup.console.time(curType);
 		}
-		renjian.trace("background更新检测:" + renjian.api[curType]);
 		$.ajax({
 			url: renjian.api[curType], 
 			dataType: "json",

@@ -6,7 +6,6 @@ a:hover {text-decoration: underline;}
 	height: 466px;
 	overflow-y: auto;
 	word-wrap: break-word;
-	background: url(images/tab.gif) no-repeat;
 }
 .scrollArea{
 	border: 1px solid #B7B7B7;
@@ -110,7 +109,7 @@ a:hover {text-decoration: underline;}
 }
 .item{
 	padding: 8px;
-	border-bottom:1px solid #D2DADA;
+	border-bottom:1px dashed #D2DADA;
 	background: #fff;
 	overflow: hidden;
 	vertical-align: bottom;
@@ -139,6 +138,25 @@ a:hover {text-decoration: underline;}
 .actionsArea{
 	display: none;
 }
+.actionsArea a{
+	margin-left: 15px;
+}
 .item:hover .actionsArea{
 	display: block;
+}
+.ztCt{
+	background: #F6F6F6;
+	border: 1px solid #E5E5E5;
+	-webkit-border-radius: 5px;
+	color: #707070;
+	padding: 8px 10px;
+	margin: 8px 0;
+}
+.ztArrow{
+ 	background: transparent url(../images/ztArrow.png) no-repeat 0 0;
+ 	position: absolute;
+ 	left: 12px;
+ 	top: -9px;
+ 	width: 17px;
+ 	height: 9px;
 }
