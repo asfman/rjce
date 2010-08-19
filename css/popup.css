@@ -160,3 +160,10 @@ a:hover {text-decoration: underline;}
  	width: 17px;
  	height: 9px;
 }
+.emot {
+	background: transparent url(../images/base.gif) no-repeat scroll 0 0;
+	height: 20px;
+	vertical-align: middle;
+	width: 20px;
+	display: inline-block;
+}
