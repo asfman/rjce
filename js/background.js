@@ -91,6 +91,7 @@ function updateHandler(){
 			username: Persistence.userName().val(),
 			password: Persistence.password().val(),
 			success: function(data, status, xhr){
+				if(!timerStart) return;
 				if(data.length > 0){
 					Array.prototype.unshift.apply(arr, data);
 					Persistence.localStorage.setObject(curType, arr);
