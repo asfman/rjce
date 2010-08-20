@@ -47,3 +47,17 @@ ValueWrapper.prototype = {
     return localStorage.removeItem(this.key);
   }
 };
+Storage.prototype.setObject = function(key, value){
+    this.setItem(key, JSON.stringify(value));
+}
+Storage.prototype.getObject = function(key){
+    var v = this.getItem(key);
+    if(v){
+        try{
+            v = JSON.parse(v);
+        }catch(e){
+            v = null;
+        }
+    }
+    return v;
+}

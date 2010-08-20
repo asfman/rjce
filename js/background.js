@@ -20,36 +20,13 @@ $(document).ready(function(){
 		}
 	}, renjian.interval);	
 });
-function init(){
+void function init(){
 	if(!Persistence.userName().val()) return;
-	$.each(renjian.typeList, function(idx, curType){
-		var arr = localStorage.getObject(curType) || [];
-		if(arr.length > renjian.pageSize){
-			arr.length = renjian.pageSize;
-			localStorage.setObject(curType, arr);
-		}	
-	});
-	timerControl(true);
-}
+	timerControl(true);	
+}();
 function imgOnerror(){
 	this.src = "images/icon48.png";
 }
-Storage.prototype.setObject = function(key, value){
-    this.setItem(key, JSON.stringify(value));
-}
-Storage.prototype.getObject = function(key){
-    var v = this.getItem(key);
-    if(v){
-        try{
-            v = JSON.parse(v);
-        }catch(e){
-            v = null;
-        }
-    }
-    return v;
-}
-//init
-init();
 function timerControl(b, actionFrom){
 	var oPopup = getView("popup"), actionFrom = actionFrom ? actionFrom : "background";
 	if(timer) clearInterval(timer);
@@ -63,7 +40,6 @@ function timerControl(b, actionFrom){
 		timerStart = false;
 	}
 }
-
 function updateHandler(){
 	if(!Persistence.userName().val()) return;
 	var oPopup = getView("popup");
@@ -76,9 +52,10 @@ function updateHandler(){
 		}		
 	}
 	$.each(renjian.typeList, function(idx, curType){
-		var arr = Persistence.localStorage.getObject(curType)||[], sinceId = "", noData = false;
-		if(arr.length) sinceId = arr[0].id;
-		else noData = true;
+		var oCache = CacheControl[curType], arr = oCache.data, sinceId = "", postData = {};
+		if(arr.length){
+			postData.since_id = arr[0].id;
+		}
 		var oPopup = getView("popup");
 		if(oPopup){
 			oPopup.renjian.trace("background更新检测:" + renjian.api[curType]);
@@ -87,14 +64,13 @@ function updateHandler(){
 		$.ajax({
 			url: renjian.api[curType], 
 			dataType: "json",
-			data: {since_id: sinceId},
-			username: Persistence.userName().val(),
-			password: Persistence.password().val(),
+			data: postData,
+			beforeSend: function(xhr){
+				xhr.setRequestHeader("Authorization", "Basic " + Base64.encode(Persistence.userName().val() + ":" + Persistence.password().val()));
+			},
 			success: function(data, status, xhr){
 				if(!timerStart) return;
 				if(data.length > 0){
-					Array.prototype.unshift.apply(arr, data);
-					Persistence.localStorage.setObject(curType, arr);
 					var winPopup = getView("popup");
 					var num = localStorage.getItem("badget_" + curType);
 					if(num){
@@ -102,13 +78,14 @@ function updateHandler(){
 					}else{
 						num = data.length;
 					}
-					if(curType != "publicTimeline" && !noData)
+					if(curType != "publicTimeline" && oCache.data.length)
 						localStorage.setItem("badget_" + curType, num);					
 					if(winPopup){
 						winPopup.renjian.trace("读取" + curType + "长度：" + data.length + ", noData:" + noData);
-						winPopup.renjian.util.updateHandler(data, curType, xhr, noData);
+						oCache.unshift(data);
 					}else{
-						if(!noData) showTipsText();
+						if(oCache.data.length) showTipsText();
+						oCache.unshift(data, true);
 					}
 				}
 			},

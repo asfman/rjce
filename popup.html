@@ -18,6 +18,10 @@ chrome.browserAction.setBadgeText({text: ""});
 chrome.browserAction.setTitle({title: ""});	
 try{
 	var Persistence = chrome.extension.getBackgroundPage().Persistence;
+	chrome.extension.getBackgroundPage().MessageControl.addEventListner("friendsTimeline", renjian.util.htmlManip);
+	chrome.extension.getBackgroundPage().MessageControl.addEventListner("mentionsTimeline", renjian.util.htmlManip);
+	chrome.extension.getBackgroundPage().MessageControl.addEventListner("publicTimeline", renjian.util.htmlManip);
+	chrome.extension.getBackgroundPage().MessageControl.addEventListner("directMessage", renjian.util.htmlManip);	
 	if(Persistence && Persistence.userName().val()){
 		renjian.userName = Persistence.userName().val();
 		renjian.password = Persistence.password().val();

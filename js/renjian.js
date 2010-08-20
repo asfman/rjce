@@ -21,19 +21,20 @@ renjian.util = {
 			renjian.trace("读取" + renjian.util.getTimelineName[curType]);
 			renjian.trace("读取url:" + renjian.api[curType]);
 			renjian.curType = curType;
-			var cacheData = Persistence.localStorage.getObject(curType);
-			if(!extraObj.force && cacheData && cacheData.length){
-				renjian.util.createHtml(cacheData);
+			var oCache = chrome.extension.getBackgroundPage().CacheControl[curType];
+			var cacheData = oCache.data;
+			if(!extraObj.force && cacheData.length){
+				oCache.reload();
 				renjian.util.checkUpdate();
 				$("#scrollArea").scrollTop(0);
 				return false;
 			}
 			this.getStatus({count: renjian.pageSize}, function(arr, xhr ,status){
 				arr = arr || [];
-				if(arr.length) Persistence.localStorage.setObject(curType, arr);
+				if(arr.length){
+					oCache.reload(arr, curType != renjian.curType);
+				}
 				renjian.trace("解析" + curType + ", 共" + arr.length + "条");
-				if(curType == renjian.curType)
-					renjian.util.createHtml(arr);
 			}, {
 				start: "正在读取" +  renjian.util.getTimelineName[curType],
 				end: "读取完成"
@@ -42,25 +43,6 @@ renjian.util = {
 			renjian.trace("error:" + e.message);
 		}
 		return false;
-	},
-	createHtml: function(cacheData){
-	    var curType = renjian.curType;
-		var arr =  cacheData || Persistence.localStorage.getObject(curType);
-		var o = $("#scrollArea");
-		if(arr && arr.length){
-			var ret = ["<ul id='" + curType + "List'>"];
-			ret.push($.map(arr, function(status, idx){
-				return renjian.util.parseData(status);
-			}).join(""));
-			ret.push("</ul>");
-			o.empty().html(ret.join(""));
-			this.initEvent(o);
-			if(arr.length >= renjian.pageSize)
-				o.append('<a href="javascript:void(0)" onclick="renjian.util.more()" id="more">更多</a>');
-			this.updateRelativeTime(o, curType);
-		}else{
-			o.empty().append("<ul id='" + curType + "List'><li id='nothing'>没有任何数据</li></ul>");
-		}
 	},
 	getStatus: function(dataObj, callback, tipsObj){
 		try{
@@ -107,86 +89,36 @@ renjian.util = {
 		}
 	},
 	checkUpdate: function(){
-		var curType = renjian.curType, arr = Persistence.localStorage.getObject(curType)||[];
-		var sinceId = "";
-		if(arr.length) sinceId = arr[0].id;
+		var curType = renjian.curType, oCache = chrome.extension.getBackgroundPage().CacheControl[curType], arr = oCache.data, postData = {};
+		if(arr.length){
+			postData.since_id = arr[0].id;
+		}
 		renjian.trace("更新检测");
-		this.getStatus({since_id: sinceId}, function(data, xhr){
+		this.getStatus(postData, function(data, xhr){
 			data = data || [];
 			renjian.trace("更新检测完成，数据长度：" + data.length);
 			if(data.length > 0){
-				Array.prototype.unshift.apply(arr, data);
-				Persistence.localStorage.setObject(curType, arr);
-				renjian.trace("更新显示新数据");
-				renjian.util.updateRecentData(data, curType, xhr);
+				oCache.unshift(data);
 			}
 		}, {
 			start: "更新检测",
 			end: "检测完成"
 		});
 	},
-	updateHandler: function(data, curType, xhr, noData){
-		if(curType == renjian.curType){
-			renjian.util.updateRecentData(data, curType, xhr);
-		}else if(!noData){
-			var num = parseInt(Persistence.localStorage.getItem("badget_" + curType),10)||0;
-			if(num > 0)
-			switch(curType){
-				case "friendsTimeline": 
-					$("#fNum").html("(" + num + ")").show();
-				break;
-				case "mentionsTimeline":
-					$("#mNum").html("(" + num + ")").show();
-				break;
-			}
-		}	
-	},
 	more: function(){
-		var curType = renjian.curType, arr = Persistence.localStorage.getObject(curType)||[];
-		var maxId = "";
-		if(arr && arr.length) maxId = arr[arr.length - 1].id;		
-		this.getStatus({count: renjian.pageSize, max_id: maxId}, function(data){
+		var curType = renjian.curType, oCache = chrome.extension.getBackgroundPage().CacheControl[curType], arr = oCache.data, postData = {count: renjian.pageSize};
+		if(arr && arr.length){
+			postData.max_id = arr[arr.length - 1].id
+		}
+		this.getStatus(postData, function(data){
 			data = data || [];
 			if(data.length > 0){
-				arr = Persistence.localStorage.getObject(curType)||[];
-				var len = arr.length;				
-				Array.prototype.push.apply(arr, data);
-				Persistence.localStorage.setObject(curType, arr);
-				var ct = $("#" + curType + "List");
-				if(!ct.length) return;
-				var ret = $.map(data, function(status, idx){
-					return renjian.util.parseData(status);
-				});
-				ct.append.apply(ct, ret);
-				renjian.util.initEvent(ct.find(".item:gt(" + len + ")"));
-				$("#more").remove();
-				if(data.length == renjian.pageSize)
-					ct.append('<a href="javascript:void(0)" onclick="renjian.util.more()" id="more">更多</a>');
-				renjian.util.updateRelativeTime(ct, curType);
+				oCache.push(data);
 			}
 		}, {
 			start: "读取更多",
 			end: "读取完成"
 		});
-	},
-	updateRecentData: function(data, curType, xhr){
-		try{
-			var ct = $("#" + curType + "List");
-			if(!ct.length) return;
-			if($("#nothing").length) $("#nothing").remove();
-			$.each(data, function(idx, status){
-				var o = $(renjian.util.parseData(status)).hide().prependTo(ct);
-				renjian.util.initEvent(o);
-				o.slideDown();
-			});
-			var serverTime  = new Date(xhr.getResponseHeader("Date")).valueOf();
-			ct.find(".time").each(function(){
-				$(this).html(renjian.util.calRelTime($(this).attr("rel"), serverTime));
-			});	
-		}catch(e){
-			renjian.trace("更新数据出错：" + e);
-		}
-		this.updateRelativeTime(ct, curType);
 	},
 	parseData: function(status){
 			var sTpl = "", oUserInfo = {};
@@ -226,43 +158,32 @@ renjian.util = {
 		o.find(".avatar img").each(function(){
 			this.onerror = chrome.extension.getBackgroundPage().imgOnerror;
 		}).hover(function(){
+			var _this = this;
 			window.hv = true;
-			var offset = $(this).offset(), iTop = offset.top + 10, iLeft = offset.left + 50;
-			var userInfo =$("#userInfo");
-			if(userInfo.is(":visible")) userInfo.hide();
-			var oUserInfo = JSON.parse(decodeURIComponent($(this).attr("rel"))), ret = "";
-			try{
-				ret = TrimPath.parseTemplate($("#userInfoTpl").html()).process(oUserInfo, {throwExceptions: true})
-			}catch(e){renjian.trace("userInfoTpl模板解析出错:" + e);}
-			if(!ret) return;
-			$("#userInfoCt").html(ret);
-			var iHeight = userInfo.outerHeight(true);
-			if(iTop + iHeight > $(window).height()) iTop = $(window).height() -  iHeight - 10;
-			userInfo.css({
-				left: iLeft,
-				top: iTop,
-				width: $(window).width() - 130,
-				zIndex: $.zIndex++					
-			}).fadeIn();			
+			if(window.hoverTimer) clearTimeout(window.hoverTimer);
+			window.hoverTimer = setTimeout(function(){
+				if(!window.hv) return;
+				var offset = $(_this).offset(), iTop = offset.top + 10, iLeft = offset.left + 50;
+				var userInfo =$("#userInfo");
+				if(userInfo.is(":visible")) userInfo.hide();
+				var oUserInfo = JSON.parse(decodeURIComponent($(_this).attr("rel"))), ret = "";
+				try{
+					ret = TrimPath.parseTemplate($("#userInfoTpl").html()).process(oUserInfo, {throwExceptions: true})
+				}catch(e){renjian.trace("userInfoTpl模板解析出错:" + e);}
+				if(!ret) return;
+				$("#userInfoCt").html(ret);
+				var iHeight = userInfo.outerHeight(true);
+				if(iTop + iHeight > $(window).height()) iTop = $(window).height() -  iHeight - 10;
+				userInfo.css({
+					left: iLeft,
+					top: iTop,
+					width: $(window).width() - 130,
+					zIndex: $.zIndex++					
+				}).fadeIn();
+			}, 500);
 		}, function(e){
 			window.hv = false;
 		});	
-	},
-	template: function(str, data){
-		for(var _prop in data){
-			str = str.replace(new RegExp("@{" + _prop + "}", "g"), data[_prop]);
-		}
-		var ifRe = /<#if\s+(.+?)>([\s\S]+?)<\/#if>/g;
-		try{
-			str = str.replace(ifRe, function(al, $1, $2){
-				if(eval("(" + $1 + ")")){
-					return $2;
-				}else{
-					return "";
-				}
-			});
-		}catch(e){$("#loading").html(e.message);}
-		return str.replace(/@{\w+?}/g, "");
 	},
 	replyStatus: function(obj){
 		$("#controlPostArea").trigger("click", obj);
@@ -278,7 +199,9 @@ renjian.util = {
 		var oWin = $(ret).hide();
 		oWin.appendTo(document.body);
 		$.mask();
-		oWin.center().fadeIn();
+		oWin.center().fadeIn(function(){
+			oWin.find("textarea").focus();
+		});
 		$("#ztButton").click(this.ztHandler(obj, oWin));
 		$("#ztWinClose").click(this.ztClose);
 	},
@@ -389,16 +312,68 @@ renjian.util = {
 			renjian.trace("更新时间发生错误：" + e.message);
 		}
 	},
-	MessageControl: function(){
-		var listners = {};
-		return {
-			addEventListner: function(sType, listner){
-				listners[sType] = listner;
-			},
-			dispatch: function(sType){
-				var handler = listners[sType];
-				if(handler) handler();
+	htmlManip: function(oEvent){
+		if(oEvent.manipType != "reload"){
+			var ct = $("#" + oEvent.type + "List");
+			if(ct.length){
+				switch(oEvent.manipType){
+					case "unshift": 
+						void function(){
+							if($("#nothing").length) $("#nothing").remove();
+							$.each(oEvent.data, function(idx, status){
+								var o = $(renjian.util.parseData(status)).hide().prependTo(ct);
+								renjian.util.initEvent(o);
+								o.slideDown();
+							});
+						}();
+					break;	
+					case "push":
+						void function(){
+							var lastItem = ct.find(".item:last");
+							var ret = $.map(oEvent.data, function(status, idx){
+								return renjian.util.parseData(status);
+							});
+							ct.append.apply(ct, ret);
+							renjian.util.initEvent(lastItem.nextAll());
+							$("#more").remove();
+							if(data.length == renjian.pageSize)
+								ct.append('<a href="javascript:void(0)" onclick="renjian.util.more()" id="more">更多</a>');	
+						}();
+					break;
+					case "delete":
+						
+					break;
+				}
+				renjian.util.updateRelativeTime(ct, oEvent.type);
 			}
-		};
-	}()	
+		}else{
+			var o = $("#scrollArea"), arr = oEvent.data;
+			if(arr && arr.length){
+				var ret = ["<ul id='" + oEvent.type + "List'>"];
+				ret.push($.map(oEvent.data, function(status, idx){
+					return renjian.util.parseData(status);
+				}).join(""));
+				ret.push("</ul>");
+				o.empty().html(ret.join(""));
+				renjian.util.initEvent(o);
+				if(arr.length >= renjian.pageSize)
+					o.append('<a href="javascript:void(0)" onclick="renjian.util.more()" id="more">更多</a>');
+			}else{
+				o.empty().append("<ul id='" + oEvent.type + "List'><li id='nothing'>没有任何数据</li></ul>");
+			}			
+		}	
+		if(oEvent.type != renjian.curType){
+			var num = parseInt(Persistence.localStorage.getItem("badget_" + curType),10)||0;
+			if(num > 0){
+				switch(curType){
+					case "friendsTimeline": 
+						$("#fNum").html("(" + num + ")").show();
+					break;
+					case "mentionsTimeline":
+						$("#mNum").html("(" + num + ")").show();
+					break;
+				}
+			}	
+		}
+	}	
 }
