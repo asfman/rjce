@@ -1,8 +1,8 @@
 var renjian = {
-	trace:	function(str){
+	trace: function(str, isError){
 		try{
-			console.log(str);
-			//alert(str);
+			if(isError) console.error(str);
+			else console.log(str);
 		}catch(e){
 			alert(str);
 		}

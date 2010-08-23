@@ -43,6 +43,29 @@ function emoteReplace(str){
 		return str;
 	}	
 }
+function calRelTime(sTime, eTime){
+	if(!sTime||!eTime) return false;
+	var interval = eTime - sTime;
+	var subDate = Math.floor(interval/(60 * 60 * 24 * 1000));
+	if (interval < 0) interval = 0;
+	var second = Math.floor(interval / 1000);
+	if (second < 60) return (second?second:1)  + "秒前";
+	else if (second < 60 * 60) return Math.floor(second / 60) + "分钟前";
+	else if (second < 60 * 60 * 24) return Math.floor(second / 60 / 60) + "小时前";
+	else if (second < 60 * 60 * 24 * 2 && subDate == 1) return "昨天";
+	else if (second < 60 * 60 * 24 * 3 && subDate == 2) return "前天";
+	else if (second < 60 * 60 * 24 * 30) return subDate + "天前";
+	else if (second < 60 * 60 * 24 * 365) return Math.floor(second / (60 * 60 * 24 * 30)) + "月前";
+	else if (second < 60 * 60 * 24 * 365 * 2) return "去年";
+	else if (second < 60 * 60 * 24 * 365 * 3) return "前年";
+	else return Math.floor(second / 60 / 60 / 24 / 365) + "年前";	
+}
+function parseTime(s){
+	//2010-07-09 15:22:42 +0800
+	var arr = s.split(/\s+/);
+	var ymd = arr[0].split("-"), hms = arr[1].split(":");
+	return new Date(ymd[0], parseInt(ymd[1],10) - 1, ymd[2], hms[0], hms[1], hms[2]).valueOf();
+}
 //emote
 var  _Ubbs = {
         "[//smile]" : ["0 0", "微笑", 1],

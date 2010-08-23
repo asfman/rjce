@@ -13,16 +13,22 @@
 .userPanel{
 	float: right;
 	width: 100%;
-	margin-left: -135px;
+	margin-left: -115px;
 }
 .userPanelMg{
-	margin-left: 135px;
+	margin-left: 115px;
 }
 .userAvatar{
 	float: left;
 }
 .userAvatar a{
 	display: block;
+}
+.userAvatar img{
+	width: 100px;
+	height: 100px;
+	display: block;
+	background: url(http://renjian.com/images/buddy_icon/100x100.jpg) no-repeat;
 }
 .normalBtn{
 	-webkit-border-radius: 3px;
@@ -32,7 +38,7 @@
 	color: black;
 	cursor: default;
 	font: normal normal normal 75%/normal arial, sans-serif;
-	margin: 0px 8px 0px 0px;
+	margin: 6px auto;
 	outline: none;
 	padding: 3px 8px;
 	text-align: center;

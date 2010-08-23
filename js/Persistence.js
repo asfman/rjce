@@ -27,6 +27,8 @@ Persistence = {
 		   if(localStorage.getItem(badget)){
 				localStorage.removeItem(badget);
 		   }
+		   var oBackground = chrome.extension.getBackgroundPage();
+		   oBackground.oDataControl[key] = new oBackground.DataControl(key);
 	   }
   }
 };

@@ -122,6 +122,12 @@ a:hover {text-decoration: underline;}
 .avatar a{
 	display: block;
 }
+.avatar img{
+	width: 48px;
+	height: 48px;
+	display: block;
+	background: url(http://renjian.com/images/buddy_icon/48x48.jpg) no-repeat
+}
 .details{
 	overflow: hidden;
 	width: 100%;
