@@ -28,7 +28,7 @@ var renjian = {
 	typeList: ["friendsTimeline", "mentionsTimeline", "publicTimeline", "directMessage"],
 	curType: "",
 	timer: {},
-	interval: 15000,
+	interval: 20000,
 	pageSize: 20,
 	textNum: 200,
 	xhr: null,

@@ -66,9 +66,12 @@ function updateHandler(){
 		}
 		var delayTime = 0, delayM = 3000;
 		$.each(renjian.typeList, function(idx, curType){
-			var oData = oDataControl[curType], arr = oData.data, sinceId = "", postData = {}, len = arr.length;
+			var oData = oDataControl[curType], arr = oData.data, sinceId = "", postData = {count: renjian.pageSize}, len = arr.length;
 			if(len){
 				postData.since_id = arr[0].id;
+				if(!postData.since_id){
+					renjian.trace("postData.since_id取不到值", "error");
+				}
 			}
 			delayTime += delayM;
 			var innerDebugTime = delayTime;	
@@ -98,26 +101,28 @@ function updateHandler(){
 							xhr.setRequestHeader("Authorization", "Basic " + Base64.encode(Persistence.userName().val() + ":" + Persistence.password().val()));
 						},
 						success: function(data, status, xhr){
-							if(!timerStart || len != oData.data.length) return;
+							if(!timerStart || len != oData.data.length || !data.length) return;
 							data = data || [];
 							var winPopup = getView("popup");
-							if(curType != "publicTimeline" && oData.data.length){
+							if(curType != "publicTimeline" && len){
 								var num = localStorage.getItem("badget_" + curType);
 								if(num){
 									num = (parseInt(num, 10)||0) + data.length;
 								}else{
 									num = data.length;
 								}
-								localStorage.setItem("badget_" + curType, num);
+								if(winPopup && winPopup.renjian.curType == curType) num = 0;
+								if(data.length != renjian.pageSize)	 
+									localStorage.setItem("badget_" + curType, num);
 							}
 							if(winPopup){
 								winPopup.renjian.trace("读取" + curType + "长度：" + data.length);
 								oData.unshift(data);
 							}else{
-								if(curType != "publicTimeline" && oData.data.length){
+								oData.unshift(data, true);
+								if(curType != "publicTimeline" && len){
 									showTipsText();
 								}	
-								oData.unshift(data, true);
 							}
 						},
 						complete: function(){
@@ -154,10 +159,26 @@ function showTipsText(){
 		}
 		if(total > 99) total = "99+";
 		chrome.browserAction.setBadgeText({text: total.toString()});
-		tips += "朋友动态：" + (localStorage.getItem("badget_friendsTimeline") || 0);
-		tips += "\r\n@我：" + (localStorage.getItem("badget_mentionsTimeline") || 0);
-		tips += "\r\n悄悄话：" + (localStorage.getItem("badget_directMessage") || 0);
+		var colorHash = {red: [255, 0, 0, 255], green: [80, 179, 81, 255], blue: [75, 108, 166, 255]};
+		var fdCount = localStorage.getItem("badget_friendsTimeline") || 0;
+		var mmCount = localStorage.getItem("badget_mentionsTimeline") || 0;
+		var dmCount = localStorage.getItem("badget_directMessage") || 0;
+		var bkColor = colorHash.red;
+		if(mmCount > 0) bkColor = colorHash.green;
+		if(dmCount > 0) bkColor = colorHash.blue;
+		chrome.browserAction.setBadgeBackgroundColor({color: bkColor});
+		tips += "朋友动态：" + fdCount;
+		tips += "\r\n@我：" + mmCount;
+		tips += "\r\n悄悄话：" + dmCount;
 		chrome.browserAction.setTitle({title: tips});
+		var arr = [];
+		if(fdCount) arr.push({type: "friendsTimeline", data: (localStorage.getObject("friendsTimeline")||[]).slice(0, fdCount)});
+		if(mmCount) arr.push({type: "mentionsTimeline", data: (localStorage.getObject("mentionsTimeline")||[]).slice(0, mmCount)});
+		if(dmCount) arr.push({type: "directMessage", data: (localStorage.getObject("directMessage")||[]).slice(0, dmCount)});
+		if(arr.length)
+		chrome.tabs.getSelected(null, function(tab){
+			chrome.tabs.sendRequest(tab.id, {messages: arr});
+		});		
 	}catch(e){
 		var winPopup = getView("popup");
 		winPopup && winPopup.renjian.trace("showTipsText处理程序出错：" + e.message, "error");		
@@ -228,6 +249,9 @@ function htmlManip(oEvent){
 								ct.prepend.apply(ct, retStr);
 								winPopup.renjian.util.initEvent(firstItem.prevAll());							
 							}
+							if(ct.find(".item").length > renjian.pageSize){
+								ct.find(".item:nth(" + (renjian.pageSize-1) + ")").nextAll().remove();
+							}
 						}();
 					break;	
 					case "push":
@@ -273,6 +297,9 @@ function htmlManip(oEvent){
 					break;
 					case "mentionsTimeline":
 						$("#mNum").html("(" + num + ")").show();
+					break;
+					case "directMessage":
+						$("#dNum").html("(" + num + ")").show();
 					break;
 				}
 			}	

@@ -3,18 +3,21 @@
 <head>
 <meta http-equiv="Content-Type" content="text/html; charset=UTF-8"  />
 <link rel="stylesheet" rev="stylesheet" href="css/common.css" type="text/css" />	
-<link rel="stylesheet" rev="stylesheet" href="css/popup.css?v=99" type="text/css" />
-<link rel="stylesheet" rev="stylesheet" href="css/effects.css?v=99" type="text/css" />
+<link rel="stylesheet" rev="stylesheet" href="css/popup.css?v=20100825" type="text/css" />
+<link rel="stylesheet" rev="stylesheet" href="css/effects.css?v=20100825" type="text/css" />
 <script type="text/javascript" src="js/jquery.js"></script>
-<script type="text/javascript" src="js/extend.js?v=99"></script>
-<script type="text/javascript" src="js/Base64.js?v=99"></script>
-<script type="text/javascript" src="js/config.js?v=99"></script>	
-<script type="text/javascript" src="js/util.js?v=99"></script>
-<script type="text/javascript" src="js/renjian.js?v=99"></script>	
+<script type="text/javascript" src="js/extend.js?v=20100825"></script>
+<script type="text/javascript" src="js/Base64.js?v=20100825"></script>
+<script type="text/javascript" src="js/config.js?v=20100825"></script>	
+<script type="text/javascript" src="js/util.js?v=20100825"></script>
+<script type="text/javascript" src="js/renjian.js?v=20100825"></script>	
 <script type="text/javascript">
 window.viewName = "popup";
 chrome.browserAction.setBadgeText({text: ""});
 chrome.browserAction.setTitle({title: ""});	
+chrome.tabs.getSelected(null, function(tab){
+	chrome.tabs.sendRequest(tab.id, {close: true});
+});
 try{
 	var Persistence = chrome.extension.getBackgroundPage().Persistence;
 	if(Persistence && Persistence.userName().val()){
@@ -222,7 +225,7 @@ try{
 			</div>
 			<span class="time" rel="${created_at}">${relative_date}</span> by <a class="screenName" target="_blank" href="http://renjian.com/${user.screen_name}">${user.screen_name}</a>
 			<span>通过${source}</span>
-			<a href="http://renjian.com/c/${id}" target="_blank"><img alt="查看对话" title="查看对话" src="images/conversation.png" width="16" height="16" align="absmiddle" />{if conversation_count}<b class="gray">${conversation_count}</b>{/if}</a>
+			{if conversation_count}<a href="http://renjian.com/c/${id}" target="_blank"><img alt="查看对话" title="查看对话" src="images/conversation.png" width="16" height="16" align="absmiddle" /><b class="gray">${conversation_count}</b></a>{/if}
 		</div>
 	</li>
 </script>
@@ -265,7 +268,7 @@ try{
 			</div>
 			<span class="time" rel="${created_at}">${relative_date}</span> by <a class="screenName" target="_blank" href="http://renjian.com/${user.screen_name}">${user.screen_name}</a>
 			<span>通过${source}</span>
-			<a href="http://renjian.com/c/${id}" target="_blank"><img alt="查看对话" title="查看对话" src="images/conversation.png" width="16" height="16" align="absmiddle" />{if conversation_count}<b class="gray">${conversation_count}</b>{/if}</a>
+			{if conversation_count}<a href="http://renjian.com/c/${id}" target="_blank"><img alt="查看对话" title="查看对话" src="images/conversation.png" width="16" height="16" align="absmiddle" /><b class="gray">${conversation_count}</b></a>{/if}
 		</div>
 	</li>
 </script>
@@ -291,7 +294,7 @@ try{
 			</div>
 			<span class="time" rel="${created_at}">${relative_date}</span> by <a class="screenName" target="_blank" href="http://renjian.com/${user.screen_name}">${user.screen_name}</a>
 			<span>通过${source}</span>
-			<a href="http://renjian.com/c/${id}" target="_blank"><img alt="查看对话" title="查看对话" src="images/conversation.png" width="16" height="16" align="absmiddle" />{if conversation_count}<b class="gray">${conversation_count}</b>{/if}</a>
+			{if conversation_count}<a href="http://renjian.com/c/${id}" target="_blank"><img alt="查看对话" title="查看对话" src="images/conversation.png" width="16" height="16" align="absmiddle" /><b class="gray">${conversation_count}</b></a>{/if}
 		</div>
 	</li>
 </script>
@@ -334,7 +337,7 @@ try{
 			</div>
 			<span class="time" rel="${created_at}">${relative_date}</span> by <a class="screenName" target="_blank" href="http://renjian.com/${user.screen_name}">${user.screen_name}</a>
 			<span>通过${source}</span>
-			<a href="http://renjian.com/c/${id}" target="_blank"><img alt="查看对话" title="查看对话" src="images/conversation.png" width="16" height="16" align="absmiddle" />{if conversation_count}<b class="gray">${conversation_count}</b>{/if}</a>
+			{if conversation_count}<a href="http://renjian.com/c/${id}" target="_blank"><img alt="查看对话" title="查看对话" src="images/conversation.png" width="16" height="16" align="absmiddle" /><b class="gray">${conversation_count}</b></a>{/if}
 		</div>
 	</li>
 </script>

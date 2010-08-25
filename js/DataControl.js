@@ -23,13 +23,15 @@ DataControl.prototype = {
 		if(arr){
 			this.data = arr;
 			this.setCache();
-		}	
+		}
+		if(this.data.length > renjian.pageSize) this.data.length = renjian.pageSize;
 		if(!noDispatch) MessageControl.dispatch({data: this.getCopyData(this.data), type: this.type,  manipType: "reload"});
 	},
 	unshift: function(arr, noDispatch){
 		if(!this.isArray(arr)) arr = [arr];
 		if(!arr.length) return;
 		Array.prototype.unshift.apply(this.data, arr);
+		if(this.data.length > renjian.pageSize) this.data.length = renjian.pageSize;
 		this.setCache();
 		if(!noDispatch) MessageControl.dispatch({data: this.getCopyData(arr), type: this.type,  manipType: "unshift"});
 	},

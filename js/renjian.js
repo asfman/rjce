@@ -145,7 +145,7 @@ renjian.util = {
 			$.ajax({
 				url: renjian.api.zt,
 				type: "POST",
-				data: {id: obj.id, text: sText},
+				data: {id: obj.id, text: sText, source: "人间大炮"},
 				success: function(){
 					$("#loading").html("转发成功！").show().fadeOut(3000);
 					renjian.util.checkUpdate();
