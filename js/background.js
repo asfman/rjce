@@ -101,6 +101,8 @@ function updateHandler(){
 							xhr.setRequestHeader("Authorization", "Basic " + Base64.encode(Persistence.userName().val() + ":" + Persistence.password().val()));
 						},
 						success: function(data, status, xhr){
+							updateControl[curType] = false;
+							renjian.timer[curType] = 0;						
 							if(!timerStart || len != oData.data.length || !data.length) return;
 							data = data || [];
 							var winPopup = getView("popup");

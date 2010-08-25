@@ -35,7 +35,6 @@ function htmlEncode(str){
 			  .replace(/\'/g, "&#39;")
 			  .replace(/\r\n|\n/g, "<br />")
 			  .replace(/^\s+|\s+$/g, "")
-			  .replace(/\s+/g, "&nbsp;")
 			  .replace(/\"/g, "&quot;");
 }
 function fixText(source, length){
@@ -63,7 +62,7 @@ var timer = 0;
 chrome.extension.onRequest.addListener(function(request, sender, sendResponse){
 	try{
 		if(request.close){
-			if($("#rjdp_tips").is(":visible")) $("#rjdp_close").click();
+			if($("#rjdp_tips").length && $("#rjdp_tips").is(":visible")) $("#rjdp_close").click();
 			return;
 		}
 		var messages = [];
@@ -73,7 +72,7 @@ chrome.extension.onRequest.addListener(function(request, sender, sendResponse){
 				var status = obj.data[j], sText = status.text;
 				if(sText == "" && status.attachment){
 					if(status.attachment.type == "LINK"){
-						sText = '<a target="_blank" href="' + status.attachment.url + '">' + status.attachment.title + '</a>';
+						sText = status.attachment.title ? status.attachment.title : status.attachment.url;
 					}else if(status.attachment.type == "PICTURE"){
 						sText = "发了一张图片";
 					}
@@ -81,7 +80,7 @@ chrome.extension.onRequest.addListener(function(request, sender, sendResponse){
 					sText = status.forwarded_status.text;
 					if(sText == "" && status.forwarded_status.attachment){
 						if(status.forwarded_status.attachment.type == "LINK"){
-							sText = '<a target="_blank" href="' + status.forwarded_status.attachment.url + '">' + status.forwarded_status.attachment.title + '</a>';
+							sText = status.attachment.title ? status.attachment.title : status.attachment.url;
 						}else if(status.forwarded_status.attachment.type == "PICTURE"){
 							sText = "发了一张图片";
 						}
@@ -93,7 +92,7 @@ chrome.extension.onRequest.addListener(function(request, sender, sendResponse){
 					text: fixText(sText, 150),
 					time: status.created_at.replace(/\s+\+.+$/, ""),
 					created_at: parseTime(status.created_at),
-					source: status.source,
+					source: status.source||"网站",
 					zt: status.forwarded_status ? true : false
 				});			
 			}
@@ -109,9 +108,9 @@ chrome.extension.onRequest.addListener(function(request, sender, sendResponse){
 		}
 		if(timer) clearTimeout(timer);
 		$("#rjdp_list").empty().html(ret).fadeIn(function(){
-			timer = setTimeout(function(){
+			/*timer = setTimeout(function(){
 				if($("#rjdp_tips").is(":visible")) $("#rjdp_close").click();
-			}, 20000);
+			}, 20000);*/
 		});
 		$("#rjdp_tips").fadeIn();
 		$("#rjdp_close").click(close_rjdp);

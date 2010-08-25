@@ -15,8 +15,9 @@
 window.viewName = "popup";
 chrome.browserAction.setBadgeText({text: ""});
 chrome.browserAction.setTitle({title: ""});	
-chrome.tabs.getSelected(null, function(tab){
-	chrome.tabs.sendRequest(tab.id, {close: true});
+chrome.tabs.getAllInWindow(null, function(tabs){
+	for(var i = 0, l = tabs.length; i < l; i++)
+		chrome.tabs.sendRequest(tabs[i].id, {close: true});
 });
 try{
 	var Persistence = chrome.extension.getBackgroundPage().Persistence;
@@ -112,6 +113,7 @@ try{
 							$("#loading").html("发送成功！");
 						},
 						complete: function(){
+							$("#controlPostArea").click();
 							inReplyTo.val("");
 							$("#loading").fadeOut(1500);
 							renjian.trace("发送完成");
