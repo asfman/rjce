@@ -1,11 +1,7 @@
 var renjian = {
 	trace: function(str, isError){
-		try{
 			if(isError) console.error(str);
 			else console.log(str);
-		}catch(e){
-			alert(str);
-		}
 	},
 	api: {
 			verify: "http://api.renjian.com/v2/account/verify_credentials.json",
@@ -20,7 +16,8 @@ var renjian = {
 			update: " http://api.renjian.com/v2/statuses/update.format",
 			user: "http://api.renjian.com/v2/users/show.json",
 			follow: "http://api.renjian.com/v2/friendships/create.json",
-			zt: "http://api.renjian.com/v2/statuses/forward.json"
+			zt: "http://api.renjian.com/v2/statuses/forward.json",
+			dm: "http://api.renjian.com/v2/direct_messages/new.json"
 	},
 	statusFields: ["id", "text", "source", "truncated", "created_at", "relative_date", "liked",
 	         "likers", "liker_count", "forwarded", "forwarders", "forwarder_count", "conversation_count",

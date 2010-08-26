@@ -2,7 +2,7 @@ var viewName="background", extensionClicked = true, timerStart = false, timer = 
 $(document).ready(function(){
 	/*自动更新保护程序*/
 	setInterval(function(){
-		if(!Persistence.userName().val()) return;
+		if(!Persistence.userName.val()) return;
 		var oPopup = getView("popup");
 		if(!oPopup){
 			if(!timerStart){
@@ -10,12 +10,12 @@ $(document).ready(function(){
 				timerControl(true, "guard");
 			}
 		}else{
-			oPopup.renjian.trace("popup存在，自动更新保护程序执行");
+			renjian.trace("popup存在，自动更新保护程序执行");
 			if(!oPopup.reading && !timerStart){
-				oPopup.renjian.trace("background保护自动更新开启");
+				renjian.trace("background保护自动更新开启");
 				timerControl(true, "guard");
 			}else if(timerStart){
-				oPopup.renjian.trace("保护程序检测到自动更新已在运行");
+				renjian.trace("保护程序检测到自动更新已在运行");
 			}
 		}
 	}, renjian.interval);	
@@ -30,22 +30,26 @@ void function init(){
 	MessageControl.addEventListner("mentionsTimeline", htmlManip);
 	MessageControl.addEventListner("publicTimeline", htmlManip);
 	MessageControl.addEventListner("directMessage", htmlManip);
-	if(!Persistence.userName().val()) return;
-	timerControl(true);	
+	chrome.extension.onRequest.addListener(function(request, sender, sendResponse){
+		if(request.layerTips != undefined) Persistence.layerTips.save(request.layerTips);
+	});
+	if(!Persistence.userName.val()) return;
+	Persistence.layerTips.save(0);
+	timerControl(true, "init");	
 }();
 function imgOnerror(){
 	this.src = "http://renjian.com/images/buddy_icon/48x48.jpg";
 }
 function timerControl(b, actionFrom){
-	var oPopup = getView("popup"), actionFrom = actionFrom ? actionFrom : "background";
+	var actionFrom = actionFrom ? actionFrom : "background";
 	if(timer) clearInterval(timer);
 	if(b){
-		if(oPopup) oPopup.renjian.trace("自动更新开启-from" + actionFrom);
+		renjian.trace("自动更新开启-from " + actionFrom);
 		timerStart = true;
-		if(actionFrom == "guard") updateHandler();
+		if(actionFrom == "guard" || actionFrom == "init") setTimeout(updateHandler, 888);
 		timer = setInterval(updateHandler, renjian.interval);
 	}else{
-		if(oPopup) oPopup.renjian.trace("自动更新关闭-from" + actionFrom);
+		renjian.trace("自动更新关闭-from" + actionFrom);
 		timerStart = false;
 		$.each(renjian.timer, function(curType, val){
 			if(val) clearTimeout(val);
@@ -54,43 +58,27 @@ function timerControl(b, actionFrom){
 }
 function updateHandler(){
 	try{
-		if(!Persistence.userName().val()) return;
-		var oPopup = getView("popup");
-		if(oPopup){
-			oPopup.renjian.trace("background更新检测updateHandler开始执行");	
-			if(!window.startTime) window.startTime = new Date().getTime();
-			else{
-				oPopup.renjian.trace("执行相隔时间：" + (new Date().getTime() - window.startTime));
-				window.startTime = new Date().getTime();
-			}		
-		}
-		var delayTime = 0, delayM = 3000;
+		if(!Persistence.userName.val()) return;
+		var delayTime = 0, delayInterval = 3000;
 		$.each(renjian.typeList, function(idx, curType){
-			var oData = oDataControl[curType], arr = oData.data, sinceId = "", postData = {count: renjian.pageSize}, len = arr.length;
+			var oData = oDataControl[curType], postData = {count: renjian.pageSize}, activeType = "friendsTimeline",
+			len = oData.data.length, sync = !!updateControl[curType], innerDebugTime, oPopup = getView("popup");
 			if(len){
-				postData.since_id = arr[0].id;
-				if(!postData.since_id){
-					renjian.trace("postData.since_id取不到值", "error");
-				}
+				postData.since_id = oData.data[0].id;
 			}
-			delayTime += delayM;
-			var innerDebugTime = delayTime;	
-			var oPopup = getView("popup");
-			if(oPopup){
-				if(oPopup.renjian.curType == curType){
-					innerDebugTime = 16;
-					delayTime -= delayM;
-				}
+			delayTime += delayInterval;
+			if(oPopup && oPopup.renjian.curType != activeType) activeType = oPopup.renjian.curType;
+			if(activeType == curType){
+				innerDebugTime = 16;
+				delayTime -= delayInterval;
 			}
-			if(!updateControl[curType]){
+			innerDebugTime = delayTime;
+			renjian.trace("delay time: " + innerDebugTime + ", updateControl['"+ curType + "']: " + sync);
+			if(!sync){
 				renjian.timer[curType] = setTimeout(function(){
-					var oPopup = getView("popup");
-					if(oPopup){
-						oPopup.renjian.trace("delay time: " + innerDebugTime);
-						oPopup.renjian.trace("background更新检测:" + renjian.api[curType]);
-						oPopup.renjian.trace("postData.since_id:" + (postData.since_id||"无"));
-						if(oPopup.console && oPopup.console.time) oPopup.console.time(curType);
-					}
+					renjian.trace(innerDebugTime + "----------------------------------------------------");
+					renjian.trace("ajaxstart: update api url = " + renjian.api[curType]);
+					renjian.trace("ajaxstart: postData = " + JSON.stringify(postData));					
 					$.ajax({
 						url: renjian.api[curType], 
 						dataType: "json",
@@ -98,27 +86,27 @@ function updateHandler(){
 						cache: false,
 						beforeSend: function(xhr){
 							updateControl[curType] = true;
-							xhr.setRequestHeader("Authorization", "Basic " + Base64.encode(Persistence.userName().val() + ":" + Persistence.password().val()));
+							xhr.setRequestHeader("Authorization", "Basic " + Base64.encode(Persistence.userName.val() + ":" + Persistence.password.val()));
 						},
 						success: function(data, status, xhr){
-							updateControl[curType] = false;
-							renjian.timer[curType] = 0;						
-							if(!timerStart || len != oData.data.length || !data.length) return;
+							data = data || [];
+							renjian.trace("ajaxsuccess: url = " + this.url);
+							renjian.trace("ajaxsuccess: data.length = " + data.length + ', postData = ' + JSON.stringify(postData));
+							if(!timerStart || len != oData.data.length) return;
 							data = data || [];
 							var winPopup = getView("popup");
-							if(curType != "publicTimeline" && len){
+							if(curType != "publicTimeline" && len && data.length &&
+							!(winPopup && winPopup.renjian.curType == curType)){
 								var num = localStorage.getItem("badget_" + curType);
 								if(num){
 									num = (parseInt(num, 10)||0) + data.length;
 								}else{
 									num = data.length;
 								}
-								if(winPopup && winPopup.renjian.curType == curType) num = 0;
 								if(data.length != renjian.pageSize)	 
 									localStorage.setItem("badget_" + curType, num);
 							}
 							if(winPopup){
-								winPopup.renjian.trace("读取" + curType + "长度：" + data.length);
 								oData.unshift(data);
 							}else{
 								oData.unshift(data, true);
@@ -130,24 +118,23 @@ function updateHandler(){
 						complete: function(){
 							updateControl[curType] = false;
 							renjian.timer[curType] = 0;
-							var oPopup = getView("popup");
-							if(oPopup){
-								oPopup.renjian.trace("background更新检测:" + curType + "完成！");
-								if(oPopup.console && oPopup.console.timeEnd) oPopup.console.timeEnd(curType);
-							}
+							renjian.trace("ajaxComplete: " + curType + "更新完成!")
 						}
 					});	
 				}, innerDebugTime);
 			}
 		});
 	}catch(e){
-		var winPopup = getView("popup");
-		winPopup && winPopup.renjian.trace("自动更新完成处理程序出错：" + e.message, "error");	
+		renjian.trace("自动更新出错：" + e.message, "error");
+		$.each(renjian.typeList, function(idx, curType){
+			updateControl[curType] = false;
+			renjian.timer[curType] = 0;			
+		});
 	}
 }
 function showTipsText(){
 	try{
-		var total = 0, tips = Persistence.userName().val() + " - 人间大炮\r\n";
+		var total = 0, tips = Persistence.userName.val() + " - 人间大炮\r\n";
 		$.each(renjian.typeList, function(idx, curType){
 			if(curType != "publicTimeline"){
 				var num = localStorage.getItem("badget_" + curType) || 0;
@@ -173,17 +160,18 @@ function showTipsText(){
 		tips += "\r\n@我：" + mmCount;
 		tips += "\r\n悄悄话：" + dmCount;
 		chrome.browserAction.setTitle({title: tips});
+		if(Persistence.layerTips.val() == 1) return;
 		var arr = [];
 		if(fdCount) arr.push({type: "friendsTimeline", data: (localStorage.getObject("friendsTimeline")||[]).slice(0, fdCount)});
 		if(mmCount) arr.push({type: "mentionsTimeline", data: (localStorage.getObject("mentionsTimeline")||[]).slice(0, mmCount)});
 		if(dmCount) arr.push({type: "directMessage", data: (localStorage.getObject("directMessage")||[]).slice(0, dmCount)});
 		if(arr.length)
 		chrome.tabs.getSelected(null, function(tab){
+			if(tab.url && /renjian.com/.test(tab.url)) return;
 			chrome.tabs.sendRequest(tab.id, {messages: arr});
-		});		
+		});	
 	}catch(e){
-		var winPopup = getView("popup");
-		winPopup && winPopup.renjian.trace("showTipsText处理程序出错：" + e.message, "error");		
+		renjian.trace("showTipsText出错：" + e.message, "error");		
 	}
 }
 function parseData(status){

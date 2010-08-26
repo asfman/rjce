@@ -60,6 +60,7 @@ function parseTime(s){
 }
 var timer = 0;
 chrome.extension.onRequest.addListener(function(request, sender, sendResponse){
+	chrome.extension.sendRequest({layerTips: 1});
 	try{
 		if(request.close){
 			if($("#rjdp_tips").length && $("#rjdp_tips").is(":visible")) $("#rjdp_close").click();

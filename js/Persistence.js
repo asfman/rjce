@@ -4,16 +4,14 @@ Persistence = {
   },
   localStorage: localStorage,
   init: function() {
-    var existingKeys = ['user', 'userName', "password"];
+    var existingKeys = ['user', 'userName', "password", "layerTips"];
     var _this = this;
     for(var i = 0, len = existingKeys.length; i < len; ++i) {
       var currentKey = existingKeys[i];
       var methodName = currentKey.replace(/_(\w)/g, function(m1, m2) { return m2.toUpperCase(); });
-      this[methodName] = (function(key) {
-        return function() {
-          return _this.load(key);
-        }
-      })(currentKey);
+      this[methodName] = (function(){
+          return _this.load(currentKey);
+      })();
     }
   },
   cleanData: function() {
@@ -32,18 +30,16 @@ Persistence = {
 	   }
   }
 };
-Persistence.init();
-
 function ValueWrapper(key) {
   this.key = key;
 }
 ValueWrapper.prototype = {
   save: function(value) {
-    localStorage[this.key] = value;
+    localStorage.setItem(this.key, value);
     return value;
   },
   val: function() {
-    return localStorage[this.key];
+    return localStorage.getItem(this.key);
   },
   remove: function() {
     return localStorage.removeItem(this.key);
@@ -63,3 +59,4 @@ Storage.prototype.getObject = function(key){
     }
     return v;
 }
+Persistence.init();

@@ -78,7 +78,7 @@ legend{
 		$("#loading").html("正在验证......").removeClass("error").show();
 		check();
 		function check(){
-			Persistence.userName().remove();
+			Persistence.userName.remove();
 			$.ajax({
 				type: "POST",
 				dataType: "json",
@@ -86,8 +86,8 @@ legend{
 				password: password,
 				url: renjian.api.verify,
 				success: function(data, status, xhr){
-					Persistence.userName().save(userName);
-					Persistence.password().save(password);
+					Persistence.userName.save(userName);
+					Persistence.password.save(password);
 					Persistence.localStorage.setObject("user", data);
 				    $("#loading").html("验证成功！重新点击人间大炮插件图标就有内容出来了").fadeOut(13000);
 				},
@@ -106,9 +106,9 @@ legend{
 	}
 	$(document).ready(function(){
 		$("#userSubBtn").click(submitHandler);
-		if(Persistence.userName().val()){
-			$("#userName").val(Persistence.userName().val());
-			$("#pwd").val(Persistence.password().val());
+		if(Persistence.userName.val()){
+			$("#userName").val(Persistence.userName.val());
+			$("#pwd").val(Persistence.password.val());
 		}
 		$("#pwd").keyup(function(e){
 			if(e.which == 13) submitHandler();

@@ -5,12 +5,12 @@
 		border: 1px solid #ccc;
 		background: #f7f7f7;
 		width: 380px;
-		text-shadow: 3px 3px 6px #ccc;
-		-webkit-box-shadow: 0 0 16px rgba(123,214,246,.7);
+		-webkit-box-shadow: 0 0 18px rgba(123,214,246,.7);
 		-webkit-border-radius: 5px;
 		z-index: 9999999;
 		opacity: 0.96;
 		line-height: 1.5;
+		color: #000;
    }
    #rjdp_list{
 		padding: 10px 10px 0;
@@ -47,6 +47,8 @@
    .rjdp_zt{
    		background: #33aced;
    		color: #fff;
+   		font-family: Tahoma;
+   		font-size: 10px;      		
    		padding: 1px 3px;
    		margin-left: 4px;
    }
@@ -66,5 +68,5 @@
    		color: green;
    }
    .directMessage{
-   		color: red;
+   		color: #F55343;
    }

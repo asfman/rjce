@@ -80,7 +80,7 @@ renjian.util = {
 		}
 	},
 	checkUpdate: function(){
-		var curType = renjian.curType, oData = chrome.extension.getBackgroundPage().oDataControl[curType], arr = oData.data, postData = {};
+		var curType = renjian.curType, oData = chrome.extension.getBackgroundPage().oDataControl[curType], arr = oData.data, postData = {count: renjian.pageSize};
 		if(arr.length){
 			postData.since_id = arr[0].id;
 		}
@@ -114,6 +114,50 @@ renjian.util = {
 	},
 	replyStatus: function(obj){
 		$("#controlPostArea").trigger("click", obj);
+	},
+	replyDmStatus: function(obj){
+		var sTpl = $("#ztWinTpl").html(), ret = "";
+		try{
+			ret = chrome.extension.getBackgroundPage().TrimPath.parseTemplate(sTpl).process({
+				title: "给" + obj.screenName + "发送悄悄话"
+			}, {throwExceptions: true});
+		}catch(e){renjian.trace("悄悄话模板解析出错:" + e);}
+		if(!ret) return;
+		var oWin = $(ret).hide();
+		oWin.appendTo(document.body);
+		$.mask();
+		oWin.center().fadeIn(function(){
+			oWin.find("textarea").focus();
+		});
+		oWin.find("textarea").keydown(this.keyHandler);
+		$("#ztButton").click(this.dmHandler(obj, oWin));
+		$("#ztWinClose").click(this.ztClose);		
+	},
+	keyHandler: function(e){
+		if(e && (e.which == 13 && e.metaKey || e.altKey && e.which == 83)){
+			$("#ztButton").click();
+		}
+	},
+	dmHandler: function(obj, oWin){
+		return function(e){
+			var sText = oWin.find("textarea").val();
+			$.ajax({
+				url: renjian.api.dm,
+				type: "POST",
+				data: {user: obj.screenName, text: sText, source: "人间大炮"},
+				success: function(){
+					$("#loading").html("发送完成！").show().fadeOut(3000);
+					renjian.util.checkUpdate();
+				},
+				error: function(xhr, status, e){
+					$("#loading").html("出错了: " + xhr.status).show().fadeOut(3000);
+				},
+				complete: function(){
+					$("#ztWinClose").click();
+				}
+			});
+			return false;
+		};	
 	},
 	ztStatus: function(obj){
 		var sTpl = $("#ztWinTpl").html(), ret = "";

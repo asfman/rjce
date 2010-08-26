@@ -3,27 +3,31 @@
 <head>
 <meta http-equiv="Content-Type" content="text/html; charset=UTF-8"  />
 <link rel="stylesheet" rev="stylesheet" href="css/common.css" type="text/css" />	
-<link rel="stylesheet" rev="stylesheet" href="css/popup.css?v=20100825" type="text/css" />
-<link rel="stylesheet" rev="stylesheet" href="css/effects.css?v=20100825" type="text/css" />
+<link rel="stylesheet" rev="stylesheet" href="css/popup.css?v=20100827" type="text/css" />
+<link rel="stylesheet" rev="stylesheet" href="css/effects.css?v=20100827" type="text/css" />
 <script type="text/javascript" src="js/jquery.js"></script>
-<script type="text/javascript" src="js/extend.js?v=20100825"></script>
-<script type="text/javascript" src="js/Base64.js?v=20100825"></script>
-<script type="text/javascript" src="js/config.js?v=20100825"></script>	
-<script type="text/javascript" src="js/util.js?v=20100825"></script>
-<script type="text/javascript" src="js/renjian.js?v=20100825"></script>	
+<script type="text/javascript" src="js/extend.js?v=20100827"></script>
+<script type="text/javascript" src="js/Base64.js?v=20100827"></script>
+<script type="text/javascript" src="js/config.js?v=20100827"></script>	
+<script type="text/javascript" src="js/util.js?v=20100827"></script>
+<script type="text/javascript" src="js/renjian.js?v=20100827"></script>	
 <script type="text/javascript">
 window.viewName = "popup";
 chrome.browserAction.setBadgeText({text: ""});
 chrome.browserAction.setTitle({title: ""});	
-chrome.tabs.getAllInWindow(null, function(tabs){
+/*chrome.tabs.getAllInWindow(null, function(tabs){
 	for(var i = 0, l = tabs.length; i < l; i++)
 		chrome.tabs.sendRequest(tabs[i].id, {close: true});
+});*/
+chrome.tabs.getSelected(null, function(tab){
+	chrome.tabs.sendRequest(tab.id, {close: true});
+	chrome.extension.getBackgroundPage().Persistence.layerTips.save(1);
 });
 try{
 	var Persistence = chrome.extension.getBackgroundPage().Persistence;
-	if(Persistence && Persistence.userName().val()){
-		renjian.userName = Persistence.userName().val();
-		renjian.password = Persistence.password().val();
+	if(Persistence && Persistence.userName.val()){
+		renjian.userName = Persistence.userName.val();
+		renjian.password = Persistence.password.val();
 		$.ajaxSetup({
 			beforeSend: function(xhr){
 				renjian.beforeSend(xhr);
@@ -135,7 +139,8 @@ try{
 				}, 200);
 			});
 			//init
-			$("#screenName").html(renjian.userName + " ");
+			var oUser = Persistence.localStorage.getObject("user");
+			$("#screenName").html("<a href='http://renjian.com/" + oUser.screen_name + "' target='_blank'>" + oUser.screen_name + "</a>");
 			setTimeout(function(){
 				var friendsNum = parseInt(Persistence.localStorage.getItem("badget_friendsTimeline"),10)||0;
 				if(friendsNum > 0){
@@ -311,7 +316,10 @@ try{
 			</div>
 		</div>
 		<div class="Clear"></div>
-		<div class="marginLeft extraInfo">
+		<div class="marginLeft extraInfo clearfix">
+			<div class="fr actionsArea">
+				<a onclick="renjian.util.replyDmStatus({id: ${id}, screenName: '${sender.screen_name}'})" href="javascript:void(0)">悄悄话</a>
+			</div>
 			<span class="time" rel="${created_at}">{if defined("relative_date")}${relative_date}{else}${created_at}{/if}</span> by <a class="screenName" target="_blank" href="http://renjian.com/${sender.screen_name}">${sender.screen_name}</a>
 		</div>
 	</li>
@@ -357,7 +365,7 @@ try{
 			<a href="http://renjian.com/${screen_name}" target="_blank">
 				<img onerror="this.src='http://renjian.com/images/buddy_icon/100x100.jpg'" width="100" height="100" alt="${screen_name}" rel="${screen_name}" src="${profile_image_url}" />
 			</a>
-			{if !is_following && Persistence.userName().val() != screen_name}<a class="normalBtn focus_${id}" onclick="renjian.util.focus.call(this, ${id})" href="javascript:void(0)">关注</a>{/if}
+			{if !is_following && Persistence.userName.val() != screen_name}<a class="normalBtn focus_${id}" onclick="renjian.util.focus.call(this, ${id})" href="javascript:void(0)">关注</a>{/if}
 	</div>
 </script>
 <script id="ztWinTpl" type="text/html">
@@ -369,7 +377,7 @@ try{
 				<textarea></textarea>
 			</div>
 			<div class="ztWinAction clearfix">
-				<input id="ztButton" type="button" value="转发" class="ztButton">
+				<input id="ztButton" type="button" value="发送" class="ztButton">
 			</div>
 		</div>	
 	</div>
