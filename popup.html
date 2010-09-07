@@ -3,14 +3,14 @@
 <head>
 <meta http-equiv="Content-Type" content="text/html; charset=UTF-8"  />
 <link rel="stylesheet" rev="stylesheet" href="css/common.css" type="text/css" />	
-<link rel="stylesheet" rev="stylesheet" href="css/popup.css?v=20100827" type="text/css" />
-<link rel="stylesheet" rev="stylesheet" href="css/effects.css?v=20100827" type="text/css" />
+<link rel="stylesheet" rev="stylesheet" href="css/popup.css?v=20100906" type="text/css" />
+<link rel="stylesheet" rev="stylesheet" href="css/effects.css?v=20100906" type="text/css" />
 <script type="text/javascript" src="js/jquery.js"></script>
-<script type="text/javascript" src="js/extend.js?v=20100827"></script>
-<script type="text/javascript" src="js/Base64.js?v=20100827"></script>
-<script type="text/javascript" src="js/config.js?v=20100827"></script>	
-<script type="text/javascript" src="js/util.js?v=20100827"></script>
-<script type="text/javascript" src="js/renjian.js?v=20100827"></script>	
+<script type="text/javascript" src="js/extend.js?v=20100906"></script>
+<script type="text/javascript" src="js/Base64.js?v=20100906"></script>
+<script type="text/javascript" src="js/config.js?v=20100906"></script>	
+<script type="text/javascript" src="js/util.js?v=20100906"></script>
+<script type="text/javascript" src="js/renjian.js?v=20100906"></script>	
 <script type="text/javascript">
 window.viewName = "popup";
 chrome.browserAction.setBadgeText({text: ""});
@@ -65,21 +65,21 @@ try{
 				$("#tabs a.active").removeClass("active");
 				$(this).addClass("active");
 			}
-			$("#friendsTab").click(function(e, data){
+			$("#friendsTimelineTab").click(function(e, data){
 				renjian.util.getTimeline("friendsTimeline");
 				setActiveCss.call(this);
 				Persistence.localStorage.removeItem("badget_friendsTimeline");
 				$("#fNum").hide();
 				return false;
 			});
-			$("#mentionsTab").click(function(){
+			$("#mentionsTimelineTab").click(function(){
 				renjian.util.getTimeline("mentionsTimeline");
 				Persistence.localStorage.removeItem("badget_mentionsTimeline");
 				setActiveCss.call(this);
 				$("#mNum").hide();
 				return false;	
 			});
-			$("#publicTab").click(function(){
+			$("#publicTimelineTab").click(function(){
 				renjian.util.getTimeline("publicTimeline");
 				Persistence.localStorage.removeItem("badget_publicTimeline");
 				setActiveCss.call(this);
@@ -92,6 +92,13 @@ try{
 				$("#dNum").hide();
 				return false;
 			});	
+			$("#recommendsTab").click(function(){
+				renjian.util.getTimeline("recommends");
+				Persistence.localStorage.removeItem("badget_recommends");
+				setActiveCss.call(this);
+				$("#tNum").hide();
+				return false;
+			});
 			$("#say").keydown(function(e){
 				if(e.metaKey && e.which == 13){
 					$("#postBtn").click();
@@ -142,19 +149,15 @@ try{
 			var oUser = Persistence.localStorage.getObject("user");
 			$("#screenName").html("<a href='http://renjian.com/" + oUser.screen_name + "' target='_blank'>" + oUser.screen_name + "</a>");
 			setTimeout(function(){
-				var friendsNum = parseInt(Persistence.localStorage.getItem("badget_friendsTimeline"),10)||0;
-				if(friendsNum > 0){
-					$("#fNum").html("(" + friendsNum + ")").show();
-				}		
-				var metionNum = parseInt(Persistence.localStorage.getItem("badget_mentionsTimeline"),10)||0;
-				if(metionNum > 0){
-					$("#mNum").html("(" + metionNum + ")").show();
-				}		
-				var directNum = parseInt(Persistence.localStorage.getItem("badget_directMessage"),10)||0;
-				if(directNum > 0){
-					$("#dNum").html("(" + directNum + ")").show();
-				}
-				$("#friendsTab").trigger("click");
+				var oTips = JSON.parse(Persistence.tips.val())||{};
+				$.each(oTips, function(key, val){
+					var num = 0;
+					num = parseInt(Persistence.localStorage.getItem("badget_" + key), 10)||0;
+					if(num > 0){
+						$("#" + key + "Tab b").html(num).show();
+					}
+				});
+				$("#friendsTimelineTab").trigger("click");
 			}, 100);
 			$.ajax({
 				error: function(xhr, status, errMsg){
@@ -191,10 +194,11 @@ try{
 		</div>
 	</div>
     <div id="tabs" class="clearfix">
-		    <a class="active friends" id="friendsTab" href="#"><span class="dongtai">动态<b id="fNum" class="hide red"></b></span></a>
-		    <a id="publicTab" href="#"><span>串门</span></a>
-		    <a id="mentionsTab" href="#"><span class="relative">@我<b id="mNum" class="hide red"></b></span></a>
-		    <a id="directMessageTab" href="#"><span class="relative">悄悄话 <b id="dNum" class="hide red"></b></span></a>
+		    <a id="friendsTimelineTab" class="active friends" href="#"><span class="relative">动态<b id="fNum" class="hide"></b></span></a>
+		    <a id="recommendsTab" href="#"><span class="relative">推荐<b id="tNum" class="hide"></b></span></a>
+		    <a id="publicTimelineTab" href="#"><span>串门</span></a>
+		    <a id="mentionsTimelineTab" href="#"><span class="relative">@我<b id="mNum" class="hide"></b></span></a>
+		    <a id="directMessageTab" href="#"><span class="relative">悄悄话 <b id="dNum" class="hide"></b></span></a>
 		    <div id="loading" class="hide">loading...</div>
     </div>
     <div class="scrollArea">
@@ -214,21 +218,42 @@ try{
 		</div>
 		<div class="fr details">
 			<div class="marginLeft">
-					<div class="text">
-						${fixText(text, renjian.textNum)}
-						{if (text.replace(/[^\x00-\xff]/g,"11").length > renjian.textNum)}<a class="ml" target="_blank" href="http://renjian.com/c/${id}">查看全文</a>{/if}						
-					</div>
+					{if text||defined("recommended_by_tag")}
+						<div class="text">
+							{if defined("recommended_by_tag")}<a href="http://renjian.com/q/${recommended_by_tag.name}" target="_blank" class="recommendTag">${recommended_by_tag.name}</a>{/if}${fixText(text, renjian.textNum)}
+							{if (text.replace(/[^\x00-\xff]/g,"11").length > renjian.textNum)}<a class="ml" target="_blank" href="http://renjian.com/c/${id}">查看全文</a>{/if}						
+						</div>
+					{/if}
 					<div class="picture">
 						<a class="needZoom" href="${attachment.url}" target="_blank"><img src="${attachment.thumbnail}" /></a>
 					</div>
+					{if liker_count || forwarder_count}
+						<div class="statusInfo">
+							 {if liker_count}
+							 	<div class="likers">
+							 		${liker_count}人喜欢：{for lk in likers}<a href="http://renjian.com/${lk}" target="_blank">${lk}</a>{/for}
+							 	</div>
+							 {/if}
+							 {if forwarder_count}
+							 	<div class="forwarders">
+							 		${forwarder_count}人转发：{for fd in forwarders}<a href="http://renjian.com/${fd}" target="_blank">${fd}</a>{/for}
+							 	</div>	
+							 {/if}
+						</div>
+					{/if}				
 			</div>
 		</div>
 		<div class="Clear"></div>
 		<div class="marginLeft extraInfo clearfix">
 			<div class="fr actionsArea">
-				<a onclick="renjian.util.replyStatus({id: ${id}, screenName: '${user.screen_name}'})" href="javascript:void(0)">回应{if reply_count}(<b class="red">${reply_count}</b>){/if}</a>
-				<a onclick="renjian.util.ztStatus({id: ${id}, screenName: '${user.screen_name}'})" href="javascript:void(0)">转发{if forwarder_count}(<b class="red">${forwarder_count}</b>){/if}</a>
+				<a onclick="renjian.util.replyStatus({id: ${id}, screenName: '${user.screen_name}'})" href="javascript:void(0)">回应</a>
+				<a onclick="renjian.util.ztStatus({id: ${id}, screenName: '${user.screen_name}'})" href="javascript:void(0)">转发</a>
 				{if user.screen_name == renjian.userName}<a onclick="renjian.util.deleteStatus.call(this, ${id})" href="javascript:void(0)">删除</a{/if}
+				{if liked}
+					<a class="like" onclick="renjian.util.likeStatus.call(this, {id: ${id}, screenName: '${user.screen_name}'})" href="javascript:void(0)">喜欢</a>
+				{else}	
+					<a class="unlike" onclick="renjian.util.likeStatus.call(this, {id: ${id}, screenName: '${user.screen_name}'})" href="javascript:void(0)">喜欢</a>
+				{/if}			
 			</div>
 			<span class="time" rel="${created_at}">${relative_date}</span> by <a class="screenName" target="_blank" href="http://renjian.com/${user.screen_name}">${user.screen_name}</a>
 			<span>通过${source}</span>
@@ -244,34 +269,147 @@ try{
 		<div class="fr details">
 			<div class="marginLeft">
 					<div class="text">
-						<img class="mr" src="images/zt.gif" width="33" height="16" align="absmiddle" />{if text.trim()!=""}${fixText(text, renjian.textNum)}{/if}
+						<img class="ztgif" src="images/zt.gif" width="33" height="16" align="absmiddle" />{if text.trim()!=""}${fixText(text, renjian.textNum)}{/if}
 						{if (text.replace(/[^\x00-\xff]/g,"11").length > renjian.textNum)}<a class="ml" target="_blank" href="http://renjian.com/c/${id}">查看全文</a>{/if}
 					</div>
 					<div class="ztCt relative">
 						<div class="ztArrow"></div>
-						{if forwarded_status.text}
-							<div class="ztText">
-								${fixText(forwarded_status.text, renjian.textNum)}
-								{if (forwarded_status.text.replace(/[^\x00-\xff]/g,"11").length > renjian.textNum)}<a class="ml" target="_blank" href="http://renjian.com/c/${forwarded_status.id}">查看全文</a>{/if}								
-							</div>
-						{/if}
+						<div class="ztText">
+							<a href="http://renjian.com/${forwarded_status.user.screen_name}" target="_blank"><img width="24" height="24" align="absmiddle" src="${forwarded_status.user.profile_image_url.replace(/120x120/, '24x24')}" /> ${forwarded_status.user.screen_name}</a>：{if forwarded_status.text.trim()!=""}${fixText(forwarded_status.text, renjian.textNum)}{elseif !forwarded_status.attachment}转发了帖子{/if}
+							{if (forwarded_status.text.replace(/[^\x00-\xff]/g,"11").length > renjian.textNum)}<a class="ml" target="_blank" href="http://renjian.com/c/${forwarded_status.id}">查看全文</a>{/if}								
+						</div>
 						{if forwarded_status.attachment && forwarded_status.attachment.type == "PICTURE"}
 							<div class="ztPic">
 								<a class="needZoom" href="${forwarded_status.attachment.url}" target="_blank"><img src="${forwarded_status.attachment.thumbnail}" /></a>
 							</div>
 						{/if}
 						{if forwarded_status.attachment && forwarded_status.attachment.type == "LINK"}
-							<div class="ztLink"><a  target="_blank" href="${forwarded_status.attachment.url}">${forwarded_status.attachment.title}</a></div>
+							<div class="ztLink"><a  target="_blank" href="${forwarded_status.attachment.url}">${forwarded_status.attachment.title?forwarded_status.attachment.title:forwarded_status.attachment.url}</a></div>
 						{/if}
+						<div class="ztBt clearfix">
+							<div class="fr actionsArea">
+								<a onclick="renjian.util.ztStatus({id: ${forwarded_status.id}, screenName: '${forwarded_status.user.screen_name}'})" href="javascript:void(0)">转发</a>
+								{if forwarded_status.liked}
+									<a class="like" onclick="renjian.util.likeStatus.call(this, {id: ${forwarded_status.id}, screenName: '${forwarded_status.user.screen_name}'})" href="javascript:void(0)">喜欢</a>
+								{else}	
+									<a class="unlike" onclick="renjian.util.likeStatus.call(this, {id: ${forwarded_status.id}, screenName: '${forwarded_status.user.screen_name}'})" href="javascript:void(0)">喜欢</a>
+								{/if}
+							</div>
+							{if forwarded_status.liker_count || forwarded_status.forwarder_count}
+								<div class="statusInfo">
+									 {if forwarded_status.liker_count}
+									 		${forwarded_status.liker_count}人喜欢{if forwarded_status.forwarder_count},{/if}
+									 {/if}
+									 {if forwarded_status.forwarder_count}
+									 		${forwarded_status.forwarder_count}人转发
+									 {/if}
+								</div>
+							{/if}											
+						</div>					
 					</div>
+					{if liker_count || forwarder_count}
+						<div class="statusInfo">
+							 {if liker_count}
+							 	<div class="likers">
+							 		${liker_count}人喜欢：{for lk in likers}<a href="http://renjian.com/${lk}" target="_blank">${lk}</a>{/for}
+							 		{if liker_count > 5}等{/if}
+							 	</div>
+							 {/if}
+							 {if forwarder_count}
+							 	<div class="forwarders">
+							 		${forwarder_count}人转发：{for fd in forwarders}<a href="http://renjian.com/${fd}" target="_blank">${fd}</a>{/for}
+							 		{if forwarder_count > 5}等{/if}
+							 	</div>	
+							 {/if}
+						</div>
+					{/if}					
 			</div>
 		</div>
 		<div class="Clear"></div>
 		<div class="marginLeft extraInfo clearfix">
 			<div class="fr actionsArea">
-				<a onclick="renjian.util.replyStatus({id: ${id}, screenName: '${user.screen_name}'})" href="javascript:void(0)">回应{if reply_count}(<b class="red">${reply_count}</b>){/if}</a>
-				<a onclick="renjian.util.ztStatus({id: ${id}, screenName: '${user.screen_name}'})" href="javascript:void(0)">转发{if forwarder_count}(<b class="red">${forwarder_count}</b>){/if}</a>
+				<a onclick="renjian.util.replyStatus({id: ${id}, screenName: '${user.screen_name}'})" href="javascript:void(0)">回应</a>
+				<a onclick="renjian.util.ztStatus({id: ${id}, screenName: '${user.screen_name}'})" href="javascript:void(0)">转发</a>
 				{if user.screen_name == renjian.userName}<a onclick="renjian.util.deleteStatus.call(this, ${id})" href="javascript:void(0)">删除</a{/if}
+				{if liked}
+					<a class="like" onclick="renjian.util.likeStatus.call(this, {id: ${id}, screenName: '${user.screen_name}'})" href="javascript:void(0)">喜欢</a>
+				{else}	
+					<a class="unlike" onclick="renjian.util.likeStatus.call(this, {id: ${id}, screenName: '${user.screen_name}'})" href="javascript:void(0)">喜欢</a>
+				{/if}			
+			</div>
+			<span class="time" rel="${created_at}">${relative_date}</span> by <a class="screenName" target="_blank" href="http://renjian.com/${user.screen_name}">${user.screen_name}</a>
+			<span>通过${source}</span>
+			{if conversation_count}<a href="http://renjian.com/c/${id}" target="_blank"><img alt="查看对话" title="查看对话" src="images/conversation.png" width="16" height="16" align="absmiddle" /><b class="gray">${conversation_count}</b></a>{/if}
+		</div>
+	</li>
+</script>
+<script id="statusTplReply" type="text/html">
+	<li class="item status_${id}">
+		<div class="avatar">
+			<a href="http://renjian.com/${user.screen_name}" target="_blank"><img alt="${user.screen_name}" rel="${userInfo}" src="${user.profile_image_url}" /></a>
+		</div>
+		<div class="fr details">
+			<div class="marginLeft">
+					<div class="text">
+						{if text.trim()!=""}${fixText(text, renjian.textNum)}{/if}
+						{if (text.replace(/[^\x00-\xff]/g,"11").length > renjian.textNum)}<a class="ml" target="_blank" href="http://renjian.com/c/${id}">查看全文</a>{/if}
+					</div>
+					<div class="ztCt relative">
+						<div class="ztArrow"></div>
+						<div class="ztText">
+							<a href="http://renjian.com/${replyed_status.user.screen_name}" target="_blank"><img width="24" height="24" align="absmiddle" src="${replyed_status.user.profile_image_url.replace(/120x120/, '24x24')}" /> ${replyed_status.user.screen_name}</a>：{if replyed_status.text.trim()!=""}${fixText(replyed_status.text, renjian.textNum)}{elseif !replyed_status.attachment}转发了帖子{/if}
+							{if (replyed_status.text.replace(/[^\x00-\xff]/g,"11").length > renjian.textNum)}<a class="ml" target="_blank" href="http://renjian.com/c/${replyed_status.id}">查看全文</a>{/if}								
+						</div>
+						{if replyed_status.attachment && replyed_status.attachment.type == "PICTURE"}
+							<div class="ztPic">
+								<a class="needZoom" href="${replyed_status.attachment.url}" target="_blank"><img src="${replyed_status.attachment.thumbnail}" /></a>
+							</div>
+						{/if}
+						{if replyed_status.attachment && replyed_status.attachment.type == "LINK"}
+							<div class="ztLink"><a target="_blank" href="${replyed_status.attachment.url}">${replyed_status.attachment.title?replyed_status.attachment.title:replyed_status.attachment.url}</a></div>
+						{/if}
+						<div class="ztBt clearfix">
+							{if replyed_status.liker_count || replyed_status.forwarder_count}
+								<div class="statusInfo">
+									 {if replyed_status.liker_count}
+									 		${replyed_status.liker_count}人喜欢{if replyed_status.forwarder_count},{/if}
+									 {/if}
+									 {if replyed_status.forwarder_count}
+									 		${replyed_status.forwarder_count}人转发
+									 {/if}
+								</div>
+							{/if}											
+						</div>					
+					</div>
+					{if liker_count || forwarder_count}
+						<div class="statusInfo">
+							 {if liker_count}
+							 	<div class="likers">
+							 		${liker_count}人喜欢：{for lk in likers}<a href="http://renjian.com/${lk}" target="_blank">${lk}</a>{/for}
+							 		{if liker_count > 5}等{/if}
+							 	</div>
+							 {/if}
+							 {if forwarder_count}
+							 	<div class="forwarders">
+							 		${forwarder_count}人转发：{for fd in forwarders}<a href="http://renjian.com/${fd}" target="_blank">${fd}</a>{/for}
+							 		{if forwarder_count > 5}等{/if}
+							 	</div>	
+							 {/if}
+						</div>
+					{/if}					
+			</div>
+		</div>
+		<div class="Clear"></div>
+		<div class="marginLeft extraInfo clearfix">
+			<div class="fr actionsArea">
+				<a onclick="renjian.util.replyStatus({id: ${id}, screenName: '${user.screen_name}'})" href="javascript:void(0)">回应</a>
+				<a onclick="renjian.util.ztStatus({id: ${id}, screenName: '${user.screen_name}'})" href="javascript:void(0)">转发</a>
+				{if user.screen_name == renjian.userName}<a onclick="renjian.util.deleteStatus.call(this, ${id})" href="javascript:void(0)">删除</a{/if}
+				{if liked}
+					<a class="like" onclick="renjian.util.likeStatus.call(this, {id: ${id}, screenName: '${user.screen_name}'})" href="javascript:void(0)">喜欢</a>
+				{else}	
+					<a class="unlike" onclick="renjian.util.likeStatus.call(this, {id: ${id}, screenName: '${user.screen_name}'})" href="javascript:void(0)">喜欢</a>
+				{/if}			
 			</div>
 			<span class="time" rel="${created_at}">${relative_date}</span> by <a class="screenName" target="_blank" href="http://renjian.com/${user.screen_name}">${user.screen_name}</a>
 			<span>通过${source}</span>
@@ -287,17 +425,88 @@ try{
 		<div class="fr details">
 			<div class="marginLeft">
 					<div class="text">
-						${fixText(text, renjian.textNum)}
+						{if defined("recommended_by_tag")}<a href="http://renjian.com/q/${recommended_by_tag.name}" target="_blank" class="recommendTag">${recommended_by_tag.name}</a>{/if}${fixText(text, renjian.textNum)}
 						{if (text.replace(/[^\x00-\xff]/g,"11").length > renjian.textNum)}<a class="ml" target="_blank" href="http://renjian.com/c/${id}">查看全文</a>{/if}
 					</div>
+					{if liker_count || forwarder_count}
+						<div class="statusInfo">
+							 {if liker_count}
+							 	<div class="likers">
+							 		${liker_count}人喜欢：{for lk in likers}<a href="http://renjian.com/${lk}" target="_blank">${lk}</a>{/for}
+							 		{if liker_count > 5}等{/if}
+							 	</div>
+							 {/if}
+							 {if forwarder_count}
+							 	<div class="forwarders">
+							 		${forwarder_count}人转发：{for fd in forwarders}<a href="http://renjian.com/${fd}" target="_blank">${fd}</a>{/for}
+							 		{if forwarder_count > 5}等{/if}
+							 	</div>	
+							 {/if}
+						</div>
+					{/if}						
 			</div>
 		</div>
 		<div class="Clear"></div>
 		<div class="marginLeft extraInfo clearfix">
 			<div class="fr actionsArea">
-				<a onclick="renjian.util.replyStatus({id: ${id}, screenName: '${user.screen_name}'})" href="javascript:void(0)">回应{if reply_count}(<b class="red">${reply_count}</b>){/if}</a>
-				<a onclick="renjian.util.ztStatus({id: ${id}, screenName: '${user.screen_name}'})" href="javascript:void(0)">转发{if forwarder_count}(<b class="red">${forwarder_count}</b>){/if}</a>
+				<a onclick="renjian.util.replyStatus({id: ${id}, screenName: '${user.screen_name}'})" href="javascript:void(0)">回应</a>
+				<a onclick="renjian.util.ztStatus({id: ${id}, screenName: '${user.screen_name}'})" href="javascript:void(0)">转发</a>
 				{if user.screen_name == renjian.userName}<a onclick="renjian.util.deleteStatus.call(this, ${id})" href="javascript:void(0)">删除</a{/if}
+				{if liked}
+					<a class="like" onclick="renjian.util.likeStatus.call(this, {id: ${id}, screenName: '${user.screen_name}'})" href="javascript:void(0)">喜欢</a>
+				{else}	
+					<a class="unlike" onclick="renjian.util.likeStatus.call(this, {id: ${id}, screenName: '${user.screen_name}'})" href="javascript:void(0)">喜欢</a>
+				{/if}			
+			</div>
+			<span class="time" rel="${created_at}">${relative_date}</span> by <a class="screenName" target="_blank" href="http://renjian.com/${user.screen_name}">${user.screen_name}</a>
+			<span>通过${source}</span>
+			{if conversation_count}<a href="http://renjian.com/c/${id}" target="_blank"><img alt="查看对话" title="查看对话" src="images/conversation.png" width="16" height="16" align="absmiddle" /><b class="gray">${conversation_count}</b></a>{/if}
+		</div>
+	</li>
+</script>
+<script id="statusTplLink" type="text/html">
+	<li class="item status_${id}">
+		<div class="avatar">
+			<a href="http://renjian.com/${user.screen_name}" target="_blank"><img alt="${user.screen_name}" rel="${userInfo}" src="${user.profile_image_url}" /></a>
+		</div>
+		<div class="fr details">
+			<div class="marginLeft">
+					{if text || defined("recommended_by_tag")}
+						<div class="text">
+							{if defined("recommended_by_tag")}<a href="http://renjian.com/q/${recommended_by_tag.name}" target="_blank" class="recommendTag">${recommended_by_tag.name}</a>{/if}${fixText(text, renjian.textNum)}
+							{if (text.replace(/[^\x00-\xff]/g,"11").length > renjian.textNum)}<a class="ml" target="_blank" href="http://renjian.com/c/${id}">查看全文</a>{/if}
+						</div>
+					{/if}
+					<div class="link"><a target="_blank" href="${attachment.url}">${attachment.title?attachment.title:attachment.url}</a></div>
+					{if liker_count || forwarder_count}
+						<div class="statusInfo">
+							 {if liker_count}
+							 	<div class="likers">
+							 		${liker_count}人喜欢：{for lk in likers}<a href="http://renjian.com/${lk}" target="_blank">${lk}</a>{/for}
+							 		{if liker_count > 5}等{/if}
+							 	</div>
+							 {/if}
+							 {if forwarder_count}
+							 	<div class="forwarders">
+							 		${forwarder_count}人转发：{for fd in forwarders}<a href="http://renjian.com/${fd}" target="_blank">${fd}</a>{/for}
+							 		{if forwarder_count > 5}等{/if}
+							 	</div>	
+							 {/if}
+						</div>
+					{/if}					
+			</div>
+		</div>
+		<div class="Clear"></div>
+		<div class="marginLeft extraInfo clearfix">
+			<div class="fr actionsArea">
+				<a onclick="renjian.util.replyStatus({id: ${id}, screenName: '${user.screen_name}'})" href="javascript:void(0)">回应</a>
+				<a onclick="renjian.util.ztStatus({id: ${id}, screenName: '${user.screen_name}'})" href="javascript:void(0)">转发</a>
+				{if user.screen_name == renjian.userName}<a onclick="renjian.util.deleteStatus.call(this, ${id})" href="javascript:void(0)">删除</a{/if}
+				{if liked}
+					<a class="like" onclick="renjian.util.likeStatus.call(this, {id: ${id}, screenName: '${user.screen_name}'})" href="javascript:void(0)">喜欢</a>
+				{else}	
+					<a class="unlike" onclick="renjian.util.likeStatus.call(this, {id: ${id}, screenName: '${user.screen_name}'})" href="javascript:void(0)">喜欢</a>
+				{/if}			
 			</div>
 			<span class="time" rel="${created_at}">${relative_date}</span> by <a class="screenName" target="_blank" href="http://renjian.com/${user.screen_name}">${user.screen_name}</a>
 			<span>通过${source}</span>
@@ -319,35 +528,9 @@ try{
 		<div class="marginLeft extraInfo clearfix">
 			<div class="fr actionsArea">
 				<a onclick="renjian.util.replyDmStatus({id: ${id}, screenName: '${sender.screen_name}'})" href="javascript:void(0)">悄悄话</a>
+				<a onclick="renjian.util.delDmStatus.call(this, {id: ${id}, screenName: '${sender.screen_name}'})" href="javascript:void(0)">删除</a>
 			</div>
 			<span class="time" rel="${created_at}">{if defined("relative_date")}${relative_date}{else}${created_at}{/if}</span> by <a class="screenName" target="_blank" href="http://renjian.com/${sender.screen_name}">${sender.screen_name}</a>
-		</div>
-	</li>
-</script>
-<script id="statusTplLink" type="text/html">
-	<li class="item status_${id}">
-		<div class="avatar">
-			<a href="http://renjian.com/${user.screen_name}" target="_blank"><img alt="${user.screen_name}" rel="${userInfo}" src="${user.profile_image_url}" /></a>
-		</div>
-		<div class="fr details">
-			<div class="marginLeft">
-					<div class="text">
-						${fixText(text, renjian.textNum)}
-						{if (text.replace(/[^\x00-\xff]/g,"11").length > renjian.textNum)}<a class="ml" target="_blank" href="http://renjian.com/c/${id}">查看全文</a>{/if}
-					</div>
-					<div class="link"><a target="_blank" href="${attachment.url}">${attachment.title}</a></div>
-			</div>
-		</div>
-		<div class="Clear"></div>
-		<div class="marginLeft extraInfo clearfix">
-			<div class="fr actionsArea">
-				<a onclick="renjian.util.replyStatus({id: ${id}, screenName: '${user.screen_name}'})" href="javascript:void(0)">回应{if reply_count}(<b class="red">${reply_count}</b>){/if}</a>
-				<a onclick="renjian.util.ztStatus({id: ${id}, screenName: '${user.screen_name}'})" href="javascript:void(0)">转发{if forwarder_count}(<b class="red">${forwarder_count}</b>){/if}</a>
-				{if user.screen_name == renjian.userName}<a onclick="renjian.util.deleteStatus.call(this, ${id})" href="javascript:void(0)">删除</a{/if}
-			</div>
-			<span class="time" rel="${created_at}">${relative_date}</span> by <a class="screenName" target="_blank" href="http://renjian.com/${user.screen_name}">${user.screen_name}</a>
-			<span>通过${source}</span>
-			{if conversation_count}<a href="http://renjian.com/c/${id}" target="_blank"><img alt="查看对话" title="查看对话" src="images/conversation.png" width="16" height="16" align="absmiddle" /><b class="gray">${conversation_count}</b></a>{/if}
 		</div>
 	</li>
 </script>

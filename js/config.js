@@ -1,7 +1,7 @@
 var renjian = {
 	trace: function(str, isError){
 			if(isError) console.error(str);
-			else console.log(str);
+			//else console.log(str);
 	},
 	api: {
 			verify: "http://api.renjian.com/v2/account/verify_credentials.json",
@@ -10,6 +10,7 @@ var renjian = {
 			userTimeline: "http://api.renjian.com/v2/statuses/user_timeline.json",
 			mentionsTimeline: "http://api.renjian.com/v2/statuses/mentions.json",
 			directMessage: "http://api.renjian.com/v2/direct_messages/receive.json",
+			recommends: "http://api.renjian.com/v2/statuses/recommends.json",
 			single_status:	"http://api.renjian.com/v2/statuses/show/@{statusId}.json",
 			destroy: "http://api.renjian.com/v2/statuses/destroy.json",
 			end_session: "http://api.renjian.com/v2/account/end_session.json",
@@ -17,15 +18,20 @@ var renjian = {
 			user: "http://api.renjian.com/v2/users/show.json",
 			follow: "http://api.renjian.com/v2/friendships/create.json",
 			zt: "http://api.renjian.com/v2/statuses/forward.json",
-			dm: "http://api.renjian.com/v2/direct_messages/new.json"
+			dm: "http://api.renjian.com/v2/direct_messages/new.json",
+			dmDel: "http://api.renjian.com/v2/direct_messages/destroy.json",
+			like: "http://api.renjian.com/v2/statuses/like.json",
+			unlike: "http://api.renjian.com/v2/statuses/unlike.json"
 	},
 	statusFields: ["id", "text", "source", "truncated", "created_at", "relative_date", "liked",
 	         "likers", "liker_count", "forwarded", "forwarders", "forwarder_count", "conversation_count",
 	         "reply_count", "conversation_id", "attachment", "user", "forwarded_status", "replyed_status", "tag"],
-	typeList: ["friendsTimeline", "mentionsTimeline", "publicTimeline", "directMessage"],
+	typeList: ["friendsTimeline", "recommends", "mentionsTimeline", "publicTimeline", "directMessage"],
+	typeName: {"friendsTimeline": "动态", "recommends": "推荐", "mentionsTimeline": "提到我", "publicTimeline": "串门", "directMessage": "悄悄话"},
+	defaultTips: {"friendsTimeline": "动态", "mentionsTimeline": "提到我", "directMessage": "悄悄话"},
 	curType: "",
 	timer: {},
-	interval: 20000,
+	interval: 30000,
 	pageSize: 20,
 	textNum: 200,
 	xhr: null,

@@ -4,7 +4,8 @@ renjian.util = {
 		friendsTimeline: "动态",
 		mentionsTimeline: "@我",
 		publicTimeline: "串门",
-		directMessage: "悄悄话"
+		directMessage: "悄悄话",
+		recommends: "推荐"
 	},
 	getTimeline: function(curType, extraObj){
 		try{
@@ -112,6 +113,21 @@ renjian.util = {
 			end: "读取完成"
 		});
 	},
+	likeStatus: function(obj){
+		var isLike = $(this).hasClass("like"), sUrl, oData;
+		if(isLike){
+			sUrl = renjian.api.unlike;
+		}else{
+			sUrl = renjian.api.like;
+		}
+		$(this).toggleClass("like unlike");
+		$.each(["friendsTimeline", "mentionsTimeline", "publicTimeline"], function(idx, sType){
+			oData = chrome.extension.getBackgroundPage().oDataControl[sType];
+			oData.modify(obj.id, {liked: !isLike});
+		});
+		$.post(sUrl, {id: obj.id}, function(){});
+		return false;
+	},
 	replyStatus: function(obj){
 		$("#controlPostArea").trigger("click", obj);
 	},
@@ -173,6 +189,7 @@ renjian.util = {
 		oWin.center().fadeIn(function(){
 			oWin.find("textarea").focus();
 		});
+		oWin.find("textarea").keydown(this.keyHandler);
 		$("#ztButton").click(this.ztHandler(obj, oWin));
 		$("#ztWinClose").click(this.ztClose);
 	},
@@ -206,18 +223,21 @@ renjian.util = {
 	},
 	deleteStatus: function(id){
 		var oItem = $(this).closest(".item"), curType = renjian.curType;
-		$.post(renjian.api.destroy, {id: id}, function(data){});
+		$.post(renjian.api.destroy, {id: id});
 		oItem.fadeOut(function(){
 			oItem.remove();
 		});	
-		var arr = Persistence.localStorage.getObject(curType) || [];
-		for(var i = 0; i < arr.length; i++){
-			if(arr[i].id == id){
-				arr.splice(i, 1);
-				Persistence.localStorage.setObject(curType, arr);
-				break;
-			}	
-		}
+        $.each(["friendsTimeline", "mentionsTimeline", "publicTimeline"], function(idx, sType){
+        	chrome.extension.getBackgroundPage().oDataControl[sType].del(id);
+        });
+	},
+	delDmStatus: function(obj){
+		$(this).closest(".item").fadeOut(function(){
+			$(this).remove();
+		});
+		$.post(renjian.api.dmDel, {id: obj.id});
+		chrome.extension.getBackgroundPage().oDataControl["directMessage"].del(obj.id);
+		return false;
 	},
 	focus: function(userId){
 		$.ajax({
@@ -241,32 +261,34 @@ renjian.util = {
 		o.find("a.needZoom").showPic();
 		o.find(".avatar img").each(function(){
 			this.onerror = chrome.extension.getBackgroundPage().imgOnerror;
-		}).hover(function(){
-			var _this = this;
-			window.hv = true;
-			if(window.hoverTimer) clearTimeout(window.hoverTimer);
-			window.hoverTimer = setTimeout(function(){
-				if(!window.hv) return;
-				var offset = $(_this).offset(), iTop = offset.top + 10, iLeft = offset.left + 50;
-				var userInfo =$("#userInfo");
-				if(userInfo.is(":visible")) userInfo.hide();
-				var oUserInfo = JSON.parse(decodeURIComponent($(_this).attr("rel"))), ret = "";
-				try{
-					ret = chrome.extension.getBackgroundPage().TrimPath.parseTemplate($("#userInfoTpl").html()).process(oUserInfo, {throwExceptions: true})
-				}catch(e){renjian.trace("userInfoTpl模板解析出错:" + e);}
-				if(!ret) return;
-				$("#userInfoCt").html(ret);
-				var iHeight = userInfo.outerHeight(true);
-				if(iTop + iHeight > $(window).height()) iTop = $(window).height() -  iHeight - 10;
-				userInfo.css({
-					left: iLeft,
-					top: iTop,
-					width: $(window).width() - 130,
-					zIndex: $.zIndex++					
-				}).fadeIn();
-			}, 500);
-		}, function(e){
-			window.hv = false;
-		});	
+		}).hover(carTipsOver, carTipsOut);
 	}	
+}
+function carTipsOut(){
+	window.hv = false;
+}
+function carTipsOver(){
+	var _this = this;
+	window.hv = true;
+	if(window.hoverTimer) clearTimeout(window.hoverTimer);
+	window.hoverTimer = setTimeout(function(){
+		if(!window.hv) return;
+		var offset = $(_this).offset(), iTop = offset.top + 10, iLeft = offset.left + 50;
+		var userInfo =$("#userInfo");
+		if(userInfo.is(":visible")) userInfo.hide();
+		var oUserInfo = JSON.parse(decodeURIComponent($(_this).attr("rel"))), ret = "";
+		try{
+			ret = chrome.extension.getBackgroundPage().TrimPath.parseTemplate($("#userInfoTpl").html()).process(oUserInfo, {throwExceptions: true})
+		}catch(e){renjian.trace("userInfoTpl模板解析出错:" + e);}
+		if(!ret) return;
+		$("#userInfoCt").html(ret);
+		var iHeight = userInfo.outerHeight(true);
+		if(iTop + iHeight > $(window).height()) iTop = $(window).height() -  iHeight - 10;
+		userInfo.css({
+			left: iLeft,
+			top: iTop,
+			width: $(window).width() - 130,
+			zIndex: $.zIndex++					
+		}).fadeIn();
+	}, 500);
 }

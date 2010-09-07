@@ -20,7 +20,6 @@ blockquote:before, blockquote:after, q:before, q:after {content: ''; content: no
 table{border-collapse:collapse; border-spacing: 0;}
 .fixed{table-layout: fixed;}
 img,.nobd{border: 0;}
-img.more{vertical-align: absmiddle; margin-right: 3px;}
 .clearfix:after{content:"."; display: block; height: 0; clear: both; visibility: hidden;}
 .clearfix{display:inline-block;}
 /* Hides from IE-mac \*/
@@ -32,37 +31,19 @@ img.more{vertical-align: absmiddle; margin-right: 3px;}
 .hide{display: none;}
 .hide_text{text-indent: -999em; overflow: hidden;}
 .show{display: block;}
-.negative_position{position: absolute; display:block; left:-9999px; top:-9999px; z-index:10001;}
+.nosee{position: absolute; display:block; left:-9999px; top:-9999px; z-index:10001;}
 .fl{float: left;}
 .fr{float: right;}
+.ml{margin-left: 10px;}
+.mr{margin-right: 10px;}
 .pointer{cursor: pointer;}
 .gray{color: #ACACAC;}
-.white{color: #FFFFFF;}
-.green{color: #557B07;}
 .red{color: #D32163;}
 .pink{color: #F65A94;}
 .blue{color: #0B7ECE;}
 a.secrect:link, a.secrect:visited{color: #a0a0a0;}
 a.pink:link,a.pink:visited{color: #F65A94;}
 a.blue:link,a.blue:visited{color: #0B7ECE;}
-.bgWhite{background: #fff;}
-.bd{border: 1px solid #ccc;}
-.nobdb{border-bottom: 0;}
-.mglr{margin: 0 6px;}
-.mt{margin-top: 15px;}
-.ml{margin-left: 10px;}
-.ml15{margin-left: 15px;}
-.ml25{margin-left: 25px;}
-.mr{margin-right: 10px;}
-.mt8{margin-top: 8px;}
-.mb8{margin-bottom: 8px;}
-.pd_button{padding: 1px 2px;}
-.pd{padding: 6px;}
-.pd15{padding: 15px;}
-.pdr{padding-right: 10px;}
-.pdl1em{padding-left: 1em;}
-.pdb3{padding-bottom: 3px;}
-.pdb8{padding-bottom: 8px;}
 .align_ct{text-align: center;}
 .align_lf{text-align: left;}
 .align_rt{text-align: right;}
@@ -76,18 +57,12 @@ a.blue:link,a.blue:visited{color: #0B7ECE;}
 .font11{font-size: 11px;}
 .font9 {font-size: 9px;}
 .bold{font-weight: bold;}
-.letterspacing1{letter-spacing: 1px;}
 .normal{font-weight: normal;}
-.bdb{border-bottom: 1px solid #D8DFEA;}
-.upright{color: #ccc; margin: 3px;}
 .inline{display: inline;}
-.lh25{line-height: 25px;}
 .w100{width: 100%;}
-.wfixed{width: 100%; table-layout: fixed;}
 .nowrap{white-space: nowrap;}
 .relative{position: relative;}
 .absolute{position: absolute;}
-.inline{display: inline;}
 .block{display: block;}
 .hr{border-top: 1px solid #DCDCDC; height: 1px; font-size: 1px; overflow: hidden; margin: 10px 0 10px 0; width: 100%;}
 .tb{width: 100%; border-collapse: collapse;}

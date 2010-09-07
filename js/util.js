@@ -29,7 +29,10 @@ function fixText(source, length){
 	{
 	   return text.replace(/[^\x00-\xff]/g,"11").length;
 	}
-	return emoteReplace(htmlEncode(source));
+	var reName = /@([\w\u4e00-\u9fa5]{2,16})/g;
+	return emoteReplace(htmlEncode(source)).replace(reName, function(al, $1){
+		return "@<a href='http://renjian.com/" + $1 + "' target='_blank'>" + $1 + "</a>"; 
+	});
 }
 function emoteReplace(str){
 	try{

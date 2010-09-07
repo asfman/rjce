@@ -113,6 +113,26 @@ legend{
 		$("#pwd").keyup(function(e){
 			if(e.which == 13) submitHandler();
 		});
+		var oTips = Persistence.tips;
+		if(!oTips.val()) oTips.save(JSON.stringify(renjian.defaultTips));
+		var sHtml = '<table celllspacing="0" cellpadding="0"><tr>', tipsHash = JSON.parse(oTips.val()) || {};
+		$.each(renjian.typeList, function(idx, key){
+			sHtml += '<td><input type="checkbox" value=' + renjian.typeName[key] + ' id="' + key + '" />' + renjian.typeName[key] + '</td>';
+		});
+		sHtml += '<td><input class="ml" type="button" id="tipsSave" value="保存设置" /></td></tr></table>';
+		$("#messageWrapper").html(sHtml);
+		$.each(tipsHash, function(key, val){
+			var o = $("#" + key);
+			if(o.length) o[0].checked = true;
+		});
+		$("#tipsSave").click(function(){
+			var ret = {};
+			$("#messageWrapper input:checkbox:checked").each(function(){
+				ret[this.id] = this.value;
+			});
+			oTips.save(JSON.stringify(ret));
+			return false;
+		});
 	});
 </script>
 </head>
@@ -131,13 +151,17 @@ legend{
 				<td>密码</td>
 				<td><input id="pwd" type="password" class="cinput" /></td>
 			</tr>
-			<tr><td colspan="2"><input id="userSubBtn" type="button" value="提交设置"></td></tr>
+			<tr><td colspan="2"><input id="userSubBtn" type="button" value="提交验证"></td></tr>
 	    </table>
 	</fieldset>
+	<fieldset id="messageTips">
+		<legend>消息提醒设置</legend>
+		<div id="messageWrapper"></div>
+	</fieldset>
 	<fieldset id="user">
-	<legend>清除缓存</legend>
-    <input type="button" onclick="cleanCache()" value="清除缓存" />
-</fieldset>	
+		<legend>清除缓存</legend>
+	    <input type="button" onclick="cleanCache()" value="清除缓存" />
+	</fieldset>	
 </div>
 </body>
 </html>

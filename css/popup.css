@@ -96,7 +96,19 @@ a:hover {text-decoration: underline;}
 	font-weight: bold;
 	color: #fff;
 }
-
+#tabs b{
+	position: absolute;
+	top: -4px;
+	right: -4px;
+	-webkit-border-radius: 5px;
+	font-size: 8px;
+	font-family: Tahoma;
+	background: -webkit-gradient(linear, 0 0, 0 100%, from(#b4cff2), to(#e5effe));
+	color: #fff;
+	height: 14px;
+	line-height: 14px;
+	padding: 0 4px;
+}
 #loading{
 	position: absolute;
 	right: 10px;
@@ -140,13 +152,27 @@ a:hover {text-decoration: underline;}
 	word-wrap: break-word;
 	word-break: break-all;
 }
-.actionsArea{
+.actionsArea a{
 	display: none;
 }
 .actionsArea a{
-	margin-left: 15px;
+	float: left;
+	margin-left: 12px;
 }
-.item:hover .actionsArea{
+.ztBt .actionsArea a{
+	display: block;
+	font-size: 12px;
+	color: #000;
+}
+.ztBt .statusInfo{
+	font-size: 12px;
+	color: #000;
+}
+.actionsArea a.like{
+	display: block;
+	color: #D7A472;
+}
+.item:hover .actionsArea a{
 	display: block;
 }
 .ztCt{
@@ -172,3 +198,19 @@ a:hover {text-decoration: underline;}
 	width: 20px;
 	display: inline-block;
 }
+.statusInfo *{
+	font-size: 12px;
+	color: #gray;
+}
+.statusInfo a{
+	margin-left: 6px;
+	color: #gray;
+}
+a.recommendTag{
+	background-color: #50B351;
+	padding: 2px 6px;
+	font-size: 12px;
+	margin-right: 8px;
+	color: #fff;
+}
+.ztgif{margin-right: 4px;}

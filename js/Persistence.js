@@ -1,17 +1,12 @@
 Persistence = {
-  load: function (key) {
-    return new ValueWrapper(key);
-  },
   localStorage: localStorage,
   init: function() {
-    var existingKeys = ['user', 'userName', "password", "layerTips"];
+    var existingKeys = ['user', 'userName', "password", "layerTips", "tips"];
     var _this = this;
     for(var i = 0, len = existingKeys.length; i < len; ++i) {
       var currentKey = existingKeys[i];
       var methodName = currentKey.replace(/_(\w)/g, function(m1, m2) { return m2.toUpperCase(); });
-      this[methodName] = (function(){
-          return _this.load(currentKey);
-      })();
+      this[methodName] = new ValueWrapper(currentKey);
     }
   },
   cleanData: function() {

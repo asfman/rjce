@@ -18,22 +18,21 @@ $(document).ready(function(){
 				renjian.trace("保护程序检测到自动更新已在运行");
 			}
 		}
-	}, renjian.interval);	
+	}, 25000);	
 });
 void function init(){
 	for(var i = 0, l = renjian.typeList.length; i < l ; i++){
 		var key = renjian.typeList[i];
 		//only the first initilization needs read cache
 		oDataControl[key] = new DataControl(key, localStorage.getObject(key)||[]);
+		MessageControl.addEventListner(key, htmlManip);
 	}
-	MessageControl.addEventListner("friendsTimeline", htmlManip);
-	MessageControl.addEventListner("mentionsTimeline", htmlManip);
-	MessageControl.addEventListner("publicTimeline", htmlManip);
-	MessageControl.addEventListner("directMessage", htmlManip);
 	chrome.extension.onRequest.addListener(function(request, sender, sendResponse){
 		if(request.layerTips != undefined) Persistence.layerTips.save(request.layerTips);
 	});
 	if(!Persistence.userName.val()) return;
+	renjian.userName = Persistence.userName.val();
+	renjian.password = Persistence.password.val();
 	Persistence.layerTips.save(0);
 	timerControl(true, "init");	
 }();
@@ -59,7 +58,7 @@ function timerControl(b, actionFrom){
 function updateHandler(){
 	try{
 		if(!Persistence.userName.val()) return;
-		var delayTime = 0, delayInterval = 3000;
+		var delayTime = 0, delayInterval = 5000;
 		$.each(renjian.typeList, function(idx, curType){
 			var oData = oDataControl[curType], postData = {count: renjian.pageSize}, activeType = "friendsTimeline",
 			len = oData.data.length, sync = !!updateControl[curType], innerDebugTime, oPopup = getView("popup");
@@ -89,13 +88,18 @@ function updateHandler(){
 							xhr.setRequestHeader("Authorization", "Basic " + Base64.encode(Persistence.userName.val() + ":" + Persistence.password.val()));
 						},
 						success: function(data, status, xhr){
-							data = data || [];
+							if(!timerStart || len != oData.data.length || !$.isArray(data)) return;
 							renjian.trace("ajaxsuccess: url = " + this.url);
 							renjian.trace("ajaxsuccess: data.length = " + data.length + ', postData = ' + JSON.stringify(postData));
-							if(!timerStart || len != oData.data.length) return;
+							console.log("url: %s, data.length = %d", this.url, data.length);
+							if(data.length == 40){
+								renjian.trace(this.url, "error");
+								return;
+							}	
 							data = data || [];
 							var winPopup = getView("popup");
-							if(curType != "publicTimeline" && len && data.length &&
+							var oTips = JSON.parse(Persistence.tips.val())||{};
+							if(oTips[curType] && data.length && postData.since_id &&
 							!(winPopup && winPopup.renjian.curType == curType)){
 								var num = localStorage.getItem("badget_" + curType);
 								if(num){
@@ -103,8 +107,7 @@ function updateHandler(){
 								}else{
 									num = data.length;
 								}
-								if(data.length != renjian.pageSize)	 
-									localStorage.setItem("badget_" + curType, num);
+								localStorage.setItem("badget_" + curType, num);
 							}
 							if(winPopup){
 								oData.unshift(data);
@@ -118,7 +121,7 @@ function updateHandler(){
 						complete: function(){
 							updateControl[curType] = false;
 							renjian.timer[curType] = 0;
-							renjian.trace("ajaxComplete: " + curType + "更新完成!")
+							renjian.trace("ajaxComplete: " + curType + "更新完成!");
 						}
 					});	
 				}, innerDebugTime);
@@ -135,12 +138,13 @@ function updateHandler(){
 function showTipsText(){
 	try{
 		var total = 0, tips = Persistence.userName.val() + " - 人间大炮\r\n";
-		$.each(renjian.typeList, function(idx, curType){
-			if(curType != "publicTimeline"){
-				var num = localStorage.getItem("badget_" + curType) || 0;
-				total += (parseInt(num, 10)||0);
-			}
-		});
+		var index = 0, oTips = JSON.parse(Persistence.tips.val())||{};
+		$.each(oTips, function(key, val){
+			if(index % 2 == 1) tips +=", " + val + ": " + (localStorage.getItem("badget_" + key)|0) + " \r\n";
+			else tips += val + ": " + (localStorage.getItem("badget_" + key)|0);
+			total += (localStorage.getItem("badget_" + key)|0);			
+			index++;
+		});		
 		if(total == 0){
 			chrome.browserAction.setBadgeText({text: ""});
 			chrome.browserAction.setTitle({title: ""});
@@ -149,27 +153,13 @@ function showTipsText(){
 		if(total > 99) total = "99+";
 		chrome.browserAction.setBadgeText({text: total.toString()});
 		var colorHash = {red: [255, 0, 0, 255], green: [80, 179, 81, 255], blue: [75, 108, 166, 255]};
-		var fdCount = localStorage.getItem("badget_friendsTimeline") || 0;
 		var mmCount = localStorage.getItem("badget_mentionsTimeline") || 0;
 		var dmCount = localStorage.getItem("badget_directMessage") || 0;
 		var bkColor = colorHash.red;
 		if(mmCount > 0) bkColor = colorHash.green;
 		if(dmCount > 0) bkColor = colorHash.blue;
 		chrome.browserAction.setBadgeBackgroundColor({color: bkColor});
-		tips += "朋友动态：" + fdCount;
-		tips += "\r\n@我：" + mmCount;
-		tips += "\r\n悄悄话：" + dmCount;
 		chrome.browserAction.setTitle({title: tips});
-		if(Persistence.layerTips.val() == 1) return;
-		var arr = [];
-		if(fdCount) arr.push({type: "friendsTimeline", data: (localStorage.getObject("friendsTimeline")||[]).slice(0, fdCount)});
-		if(mmCount) arr.push({type: "mentionsTimeline", data: (localStorage.getObject("mentionsTimeline")||[]).slice(0, mmCount)});
-		if(dmCount) arr.push({type: "directMessage", data: (localStorage.getObject("directMessage")||[]).slice(0, dmCount)});
-		if(arr.length)
-		chrome.tabs.getSelected(null, function(tab){
-			if(tab.url && /renjian.com/.test(tab.url)) return;
-			chrome.tabs.sendRequest(tab.id, {messages: arr});
-		});	
 	}catch(e){
 		renjian.trace("showTipsText出错：" + e.message, "error");		
 	}
@@ -197,6 +187,8 @@ function parseData(status){
 			}else{//text type
 				if(status.forwarded_status){
 					sTpl = $("#statusTplZt").html();
+				}else if(status.replyed_status){
+					sTpl = $("#statusTplReply").html();
 				}else
 					sTpl = $("#statusTplText").html();
 			}
@@ -239,9 +231,10 @@ function htmlManip(oEvent){
 								ct.prepend.apply(ct, retStr);
 								winPopup.renjian.util.initEvent(firstItem.prevAll());							
 							}
+							/*
 							if(ct.find(".item").length > renjian.pageSize){
 								ct.find(".item:nth(" + (renjian.pageSize-1) + ")").nextAll().remove();
-							}
+							}*/
 						}();
 					break;	
 					case "push":
@@ -281,17 +274,7 @@ function htmlManip(oEvent){
 		if(oEvent.type != winPopup.renjian.curType){
 			var num = parseInt(localStorage.getItem("badget_" + oEvent.type),10)||0;
 			if(num > 0){
-				switch(oEvent.type){
-					case "friendsTimeline": 
-						$("#fNum").html("(" + num + ")").show();
-					break;
-					case "mentionsTimeline":
-						$("#mNum").html("(" + num + ")").show();
-					break;
-					case "directMessage":
-						$("#dNum").html("(" + num + ")").show();
-					break;
-				}
+				$("#" + val + "Tab b").html(num).show();
 			}	
 		}
 	}catch(e){
