@@ -214,3 +214,38 @@ a.recommendTag{
 	color: #fff;
 }
 .ztgif{margin-right: 4px;}
+/*表情*/
+.clickEmote{
+	display: inline-block;
+	width: 20px;
+	height: 20px;
+	text-indent: -999em;
+	overflow: hidden;
+	background: url(../images/base.gif) no-repeat;
+}
+.emotCt{
+	background: #fff;
+	border: 1px solid #ccc;
+	width: 214px;
+	position: absolute;
+}
+.emotBox{
+	padding-bottom: 3px;
+}
+.emotBox .emots{
+	margin: 2px;
+}
+.emots .emot{
+	border: 1px solid #fff;
+	cursor: pointer;
+	float: left;
+	margin-left: 4px;
+	overflow: hidden;
+	text-indent: -9999px;
+	background: transparent url(../images/base.gif) no-repeat;
+	height: 20px;
+	width: 20px;	
+}
+.emots .emot:hover{
+	border-color: #ccc;
+}

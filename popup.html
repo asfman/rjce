@@ -11,6 +11,7 @@
 <script type="text/javascript" src="js/config.js?v=20100906"></script>	
 <script type="text/javascript" src="js/util.js?v=20100906"></script>
 <script type="text/javascript" src="js/renjian.js?v=20100906"></script>	
+<script type="text/javascript" src="js/emote.js?v=20100906"></script>	
 <script type="text/javascript">
 window.viewName = "popup";
 chrome.browserAction.setBadgeText({text: ""});
@@ -133,6 +134,7 @@ try{
 				});
 				return false;
 			});
+			$("#clickEmote").click(emoteHandler);
 			$(document).mousemove(function(e){
 				if(window.timer) clearTimeout(window.timer);
 				window.timer = setTimeout(function(){
@@ -144,6 +146,11 @@ try{
 						userInfo.fadeOut();
 					}
 				}, 200);
+			})
+			$(document.body).click(function(e){
+				if(e && e.target && (e.target.nodeType == 3 || e.target.nodeType == 1 && e.target.tagName != "SPAN" && e.target.tagName != "A")){
+				     if($("div.emotCt").is(":visible")) $("div.emotCt").hide();
+				}				
 			});
 			//init
 			var oUser = Persistence.localStorage.getObject("user");
@@ -170,7 +177,6 @@ try{
 		setTimeout("chrome.tabs.create({url: chrome.extension.getURL('options.html')})", 100);
 	}
 }catch(e){alert(e.message);}
-
 </script>
 </head>
 <body>
@@ -183,6 +189,7 @@ try{
 			<div id="txtCt"><textarea id="say"></textarea></div>
 			<div id="btnCt">
 				<input id="postBtn" class="pointer" type="button" value="发送人间大炮" />
+				<a href="#" class="clickEmote" id="clickEmote">表情</a>
 			</div>
 		</div>
 		<div id="controlPostArea">
@@ -565,5 +572,10 @@ try{
 		</div>	
 	</div>
 </script>
+<div class="emotCt hide" id="emotCt">
+	  <div class="emotBox">
+		  <div class="emots" id="emots"></div>
+	  </div>
+</div>
 </body>
 </html>
