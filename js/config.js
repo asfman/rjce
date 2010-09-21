@@ -28,7 +28,7 @@ var renjian = {
 	         "reply_count", "conversation_id", "attachment", "user", "forwarded_status", "replyed_status", "tag"],
 	typeList: ["friendsTimeline", "recommends", "mentionsTimeline", "publicTimeline", "directMessage"],
 	typeName: {"friendsTimeline": "动态", "recommends": "推荐", "mentionsTimeline": "提到我", "publicTimeline": "串门", "directMessage": "悄悄话"},
-	defaultTips: {"friendsTimeline": "动态", "mentionsTimeline": "提到我", "directMessage": "悄悄话"},
+	defaultTips: {"mentionsTimeline": "提到我", "directMessage": "悄悄话"},
 	curType: "",
 	timer: {},
 	interval: 30000,
