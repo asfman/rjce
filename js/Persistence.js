@@ -1,7 +1,7 @@
 Persistence = {
   localStorage: localStorage,
   init: function() {
-    var existingKeys = ['user', 'userName', "password", "layerTips", "tips"];
+    var existingKeys = ['user', 'userName', "password", "layerTips", "tips", "divTips"];
     var _this = this;
     for(var i = 0, len = existingKeys.length; i < len; ++i) {
       var currentKey = existingKeys[i];

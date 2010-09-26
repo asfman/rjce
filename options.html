@@ -113,7 +113,7 @@ legend{
 		$("#pwd").keyup(function(e){
 			if(e.which == 13) submitHandler();
 		});
-		var oTips = Persistence.tips;
+		var oTips = Persistence.tips, divTips = Persistence.divTips;
 		if(!oTips.val()) oTips.save(JSON.stringify(renjian.defaultTips));
 		var sHtml = '<table celllspacing="0" cellpadding="0"><tr>', tipsHash = JSON.parse(oTips.val()) || {};
 		$.each(renjian.typeList, function(idx, key){
@@ -132,6 +132,13 @@ legend{
 			});
 			oTips.save(JSON.stringify(ret));
 			return false;
+		});
+		$("#divTips").click(function(){
+			if(this.checked){
+				divTips.save("on");
+			}else{
+				divTips.save("off");
+			}
 		});
 	});
 </script>
@@ -157,6 +164,9 @@ legend{
 	<fieldset id="messageTips">
 		<legend>消息提醒设置</legend>
 		<div id="messageWrapper"></div>
+		<div style="margin-top: 10px;">
+			@我、悄悄话动态层提示是否开启 <input type="checkbox" id="divTips" />
+		</div>
 	</fieldset>
 	<fieldset id="user">
 		<legend>清除缓存</legend>

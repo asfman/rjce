@@ -160,6 +160,11 @@ function showTipsText(){
 		if(dmCount > 0) bkColor = colorHash.blue;
 		chrome.browserAction.setBadgeBackgroundColor({color: bkColor});
 		chrome.browserAction.setTitle({title: tips});
+		if(Persistence.divTips.val() == "on" && mmCount || dmCount)
+			chrome.tabs.getSelected(null, function(tab){
+				if(tab.url && /renjian.com/.test(tab.url)) return;
+				chrome.tabs.sendRequest(tab.id, {messages: {mentions: mmCount, dm: dmCount}}, function(resp){});
+			});			
 	}catch(e){
 		renjian.trace("showTipsText出错：" + e.message, "error");		
 	}

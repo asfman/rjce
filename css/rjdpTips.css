@@ -1,72 +1,43 @@
 #rjdp_tips{
 		position: fixed;
-		right: 15px;
-		top: 8px;
+		right: 0px;
+		top: 0px;
 		border: 1px solid #ccc;
 		background: #f7f7f7;
-		width: 380px;
-		-webkit-box-shadow: 0 0 18px rgba(123,214,246,.7);
-		-webkit-border-radius: 5px;
+		width: 260px;
 		z-index: 9999999;
-		opacity: 0.96;
-		line-height: 1.5;
+		line-height: 1.8;
 		color: #000;
    }
+   #rjdp_tips h1{
+   		font-size: 16px;
+   		margin: 8px 8px 0;
+   		text-align: left;
+   }
    #rjdp_list{
-		padding: 10px 10px 0;
+		padding: 6px;
    }
    #rjdp_close{
-		float: right;
-		margin: 8px;
+		position: absolute;
+		top: 6px;
+		right: 6px;
 		font-size: 14px;
-		font-weight: 200;
+		font-weight: 600;
+		font-family: Tahoma;
 		color: #0B7ECE;
    }
    .rjdp_item{
 		word-wrap: break-word;
 		margin-bottom: 10px;
 		font-family: Tahoma;
-		text-align: left;
-   }
-   .rjdp_screenName{
-   		font-size: 14px;
-   }
-   .rjdp_text{
-		margin-left: 4px;
+		text-align: center;
 		font-size: 14px;
    }
-   .rjdp_time{
-   		color: #acacac;
-   		font-family: Tahoma;
-   		font-size: 10px;   	
+   .rjdp_item *{
+   		font-size: 14px;
    }
-   .rjdp_source a:link, .rjdp_source a:visited{
-   		text-decoration: none;
-   		color: #000;
-   }
-   .rjdp_zt{
-   		background: #33aced;
-   		color: #fff;
-   		font-family: Tahoma;
-   		font-size: 10px;      		
-   		padding: 1px 3px;
-   		margin-left: 4px;
-   }
-   .rjdp_type{
-   		-webkit-border-radius: 8px;
-   		padding: 3px 5px;
-   		background: #DDD;
-   		font-family: Tahoma;
-   		font-size: 10px;
-   		font-weight: 600;
-   		margin-right: 6px;
-   }
-   .friendsTimeline{
-   		color: #555;
-   }
-   .mentionsTimeline{
-   		color: green;
-   }
-   .directMessage{
-   		color: #F55343;
-   }
+   .rjdp_item em{
+		font-size: 18px;
+		padding: 0 6px;
+		font-weight: 600;
+   }   
