@@ -29,6 +29,13 @@ void function init(){
 	}
 	chrome.extension.onRequest.addListener(function(request, sender, sendResponse){
 		if(request.layerTips != undefined) Persistence.layerTips.save(request.layerTips);
+		if(request.closeOther){
+			chrome.tabs.getAllInWindow(null, function(tabs){
+				for(var i = 0, l = tabs.length; i < l; i++)
+					chrome.tabs.sendRequest(tabs[i].id, {closeOther: true});
+			});
+		}
+		sendResponse({});
 	});
 	if(!Persistence.userName.val()) return;
 	renjian.userName = Persistence.userName.val();
@@ -160,6 +167,7 @@ function showTipsText(){
 		if(dmCount > 0) bkColor = colorHash.blue;
 		chrome.browserAction.setBadgeBackgroundColor({color: bkColor});
 		chrome.browserAction.setTitle({title: tips});
+		if(Persistence.layerTips.val() == 1) return;
 		if(Persistence.divTips.val() == "on" && mmCount || dmCount)
 			chrome.tabs.getSelected(null, function(tab){
 				if(tab.url && /renjian.com/.test(tab.url)) return;
