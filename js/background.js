@@ -27,20 +27,17 @@ void function init(){
 		oDataControl[key] = new DataControl(key, localStorage.getObject(key)||[]);
 		MessageControl.addEventListner(key, htmlManip);
 	}
+	
 	chrome.extension.onRequest.addListener(function(request, sender, sendResponse){
-		if(request.layerTips != undefined) Persistence.layerTips.save(request.layerTips);
-		if(request.closeOther){
-			chrome.tabs.getAllInWindow(null, function(tabs){
-				for(var i = 0, l = tabs.length; i < l; i++)
-					chrome.tabs.sendRequest(tabs[i].id, {closeOther: true});
-			});
-		}
+		//if(request.layerTips != undefined) Persistence.layerTips.save(request.layerTips);
+		if(request.setting) chrome.tabs.create({url: chrome.extension.getURL('options.html')});
 		sendResponse({});
 	});
+	/*
+	Persistence.layerTips.save(0);*/
 	if(!Persistence.userName.val()) return;
 	renjian.userName = Persistence.userName.val();
 	renjian.password = Persistence.password.val();
-	Persistence.layerTips.save(0);
 	timerControl(true, "init");	
 }();
 function imgOnerror(){
@@ -72,6 +69,7 @@ function updateHandler(){
 			if(len){
 				postData.since_id = oData.data[0].id;
 			}
+			postData.trim_html = true;
 			delayTime += delayInterval;
 			if(oPopup && oPopup.renjian.curType != activeType) activeType = oPopup.renjian.curType;
 			if(activeType == curType){
@@ -167,12 +165,24 @@ function showTipsText(){
 		if(dmCount > 0) bkColor = colorHash.blue;
 		chrome.browserAction.setBadgeBackgroundColor({color: bkColor});
 		chrome.browserAction.setTitle({title: tips});
-		if(Persistence.layerTips.val() == 1) return;
-		if(Persistence.divTips.val() == "on" && mmCount || dmCount)
-			chrome.tabs.getSelected(null, function(tab){
-				if(tab.url && /renjian.com/.test(tab.url)) return;
-				chrome.tabs.sendRequest(tab.id, {messages: {mentions: mmCount, dm: dmCount}}, function(resp){});
-			});			
+		//if(Persistence.layerTips.val() == 1) return;
+		if(window.oldMM !== mmCount || window.oldDM !== dmCount){
+			if(Persistence.divTips.val() == "on" && mmCount || dmCount){
+				chrome.tabs.getSelected(null, function(tab){
+					if(tab.url && /renjian.com/.test(tab.url)) return;
+					chrome.tabs.getAllInWindow(null, function(tabs){
+						for(var i = 0, l = tabs.length; i < l; i++){
+							if(tabs[i].id != tab.id)
+								chrome.tabs.sendRequest(tabs[i].id, {close: true}, function(resp){});
+						}	
+					});
+					chrome.tabs.sendRequest(tab.id, {messages: {mentions: mmCount, dm: dmCount}}, function(resp){
+						window.oldMM = mmCount;
+						window.oldDM = dmCount;							
+					});
+				});
+			}
+		}
 	}catch(e){
 		renjian.trace("showTipsText出错：" + e.message, "error");		
 	}

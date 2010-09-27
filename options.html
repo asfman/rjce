@@ -113,14 +113,14 @@ legend{
 		$("#pwd").keyup(function(e){
 			if(e.which == 13) submitHandler();
 		});
-		var oTips = Persistence.tips, divTips = Persistence.divTips;
+		var oTips = Persistence.tips, odivTips = Persistence.divTips;
 		if(!oTips.val()) oTips.save(JSON.stringify(renjian.defaultTips));
 		var sHtml = '<table celllspacing="0" cellpadding="0"><tr>', tipsHash = JSON.parse(oTips.val()) || {};
 		$.each(renjian.typeList, function(idx, key){
 			sHtml += '<td><input type="checkbox" value=' + renjian.typeName[key] + ' id="' + key + '" />' + renjian.typeName[key] + '</td>';
 		});
 		sHtml += '<td><input class="ml" type="button" id="tipsSave" value="保存设置" /></td></tr></table>';
-		$("#messageWrapper").html(sHtml);
+		$("#messageWrapper").html("<b>数字提示：</b><br />" + sHtml);
 		$.each(tipsHash, function(key, val){
 			var o = $("#" + key);
 			if(o.length) o[0].checked = true;
@@ -133,11 +133,16 @@ legend{
 			oTips.save(JSON.stringify(ret));
 			return false;
 		});
+		if(!odivTips.val()){
+			odivTips.save("on");
+		}
+		if(odivTips.val() == "on") $("#divTips")[0].checked = true;
+		else $("#divTips")[0].checked = false;
 		$("#divTips").click(function(){
 			if(this.checked){
-				divTips.save("on");
+				odivTips.save("on");
 			}else{
-				divTips.save("off");
+				odivTips.save("off");
 			}
 		});
 	});
@@ -165,7 +170,8 @@ legend{
 		<legend>消息提醒设置</legend>
 		<div id="messageWrapper"></div>
 		<div style="margin-top: 10px;">
-			@我、悄悄话动态层提示是否开启 <input type="checkbox" id="divTips" />
+			<b>弹出层提示：</b><br />
+			@我、悄悄话弹出层提示是否开启 <input type="checkbox" id="divTips" />
 		</div>
 	</fieldset>
 	<fieldset id="user">

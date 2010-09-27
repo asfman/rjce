@@ -13,6 +13,7 @@
    		font-size: 16px;
    		margin: 8px 8px 0;
    		text-align: left;
+   		color: #000;
    }
    #rjdp_list{
 		padding: 6px;
@@ -25,6 +26,15 @@
 		font-weight: 600;
 		font-family: Tahoma;
 		color: #0B7ECE;
+   }
+   #rjdp_setting{
+		position: absolute;
+		top: 6px;
+		right: 56px;
+		font-size: 14px;
+		font-weight: 600;
+		font-family: Tahoma;
+		color: #0B7ECE;   
    }
    .rjdp_item{
 		word-wrap: break-word;
@@ -40,4 +50,5 @@
 		font-size: 18px;
 		padding: 0 6px;
 		font-weight: 600;
+		color: #C03;
    }   

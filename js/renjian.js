@@ -43,6 +43,7 @@ renjian.util = {
 			}
 			if(renjian.xhr) try{renjian.xhr.abort();}catch(err){}
 			renjian.trace("getStatus读取链接：" + renjian.api[renjian.curType]);
+			dataObj.trim_html = true;
 			renjian.xhr = $.ajax({
 				beforeSend: function(xhr){
 					renjian.beforeSend(xhr);

@@ -16,14 +16,14 @@
 window.viewName = "popup";
 chrome.browserAction.setBadgeText({text: ""});
 chrome.browserAction.setTitle({title: ""});	
-/*
 chrome.tabs.getAllInWindow(null, function(tabs){
-	for(var i = 0, l = tabs.length; i < l; i++)
+	for(var i = 0, l = tabs.length; i < l; i++){
 		chrome.tabs.sendRequest(tabs[i].id, {close: true});
-});*/
+	}	
+});
 chrome.tabs.getSelected(null, function(tab){
 	chrome.tabs.sendRequest(tab.id, {close: true});
-	chrome.extension.getBackgroundPage().Persistence.layerTips.save(1);
+	//chrome.extension.getBackgroundPage().Persistence.layerTips.save(1);
 });
 try{
 	var Persistence = chrome.extension.getBackgroundPage().Persistence;
