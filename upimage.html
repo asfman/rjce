@@ -1,0 +1,268 @@
+<!doctype html>
+<html>
+<head>
+<meta http-equiv="Content-Type" content="text/html; charset=UTF-8"  />
+<link rel="stylesheet" rev="stylesheet" href="css/common.css" type="text/css" />	
+<link rel="stylesheet" rev="stylesheet" href="css/popup.css?v=20100906" type="text/css" />
+<link rel="stylesheet" rev="stylesheet" href="css/effects.css?v=20100906" type="text/css" />
+<style type="text/css">
+body{width: 486px; margin: 10px auto;}
+.fileSel{
+    margin-top:15px;
+    border: 1px solid #0E774A;
+    background-color: #E9F4E9;
+    height: 50px;
+    width: 480px;
+    text-align:center;
+    color:#0C7823;
+    font-weight: bold;
+    line-height:52px;
+}
+
+.fileSel .selTip{
+    margin-top: -50px;
+    position: absolute;
+    width:480px;
+}
+#picFile{
+    opacity: 0;
+    position: absolute;
+    margin-top:-66px;
+    height: 56px;
+    width: 486px;
+    cursor: pointer;
+}
+.graph { 
+    position: relative;
+    border: 1px solid #B1D632; 
+    padding: 2px; 
+    margin-bottom: .5em;                    
+}
+
+.graph .bar { 
+    display: block;    
+    position: relative;
+    background: #B1D632; 
+    text-align: center; 
+    color: #fff; 
+    height: 50px; 
+    line-height: 50px;
+}
+
+.graph .bar span{
+	position: absolute;
+	left: 3px;
+}
+
+#progressInfo{margin-bottom:10px;}
+.notification{
+	position: absolute;
+	top:0;
+    display: none;
+    text-align: center;
+    z-index: 99999;
+	  
+}
+.noticeCtTp{
+	font-size: 14px;
+	font-weight: bold;
+	color: #d32163;
+}
+.noticeCt{
+    border: 2px solid #ccc; 
+	background: #fff;
+	padding: 8px 26px; 
+	vertical-align: middle;
+	-moz-border-radius-bottomleft:5px;
+	-moz-border-radius-bottomright:5px;
+	-moz-border-radius-topleft:5px;
+	-moz-border-radius-topright:5px;
+	-webkit-border-bottom-left-radius: 5px;
+	-webkit-border-bottom-right-radius: 5px;
+	-webkit-border-top-left-radius: 5px;
+	-webkit-border-top-right-radius: 5px;   
+}
+</style>
+<script type="text/javascript" src="js/jquery.js"></script>
+<script type="text/javascript" src="js/extend.js?v=20100906"></script>
+<script type="text/javascript" src="js/Base64.js?v=20100906"></script>
+<script type="text/javascript" src="js/config.js?v=20100906"></script>	
+<script type="text/javascript" src="js/util.js?v=20100906"></script>
+<script type="text/javascript" src="js/emote.js?v=20100906"></script>
+<script type="text/javascript">
+function sendImg(){
+	var file = $("#picFile")[0].files[0];
+	if(!file){
+		showMessage("你还没有选择上传图片！");
+		return false;
+	}
+    var boundary = '----multipartformboundary' + (new Date).getTime();
+    var dashdash = '--';
+    var crlf     = '\r\n';
+
+    /* Build RFC2388 string. */
+    var builder = '';
+
+    builder += dashdash;
+    builder += boundary;
+    builder += crlf;
+
+    builder += 'Content-Disposition: form-data; name="source"';
+    builder += crlf;
+    builder += crlf; 
+
+    /* Append form data. */
+    builder += "人间大炮";
+    builder += crlf;
+
+    /* Write boundary. */
+    builder += dashdash;
+    builder += boundary;
+    builder += crlf;
+
+    builder += 'Content-Disposition: form-data; name="text"';
+    builder += crlf;
+    builder += crlf; 
+
+    /* Append form data. */
+    builder += $("#say").val();
+    builder += crlf;
+
+    /* Write boundary. */
+    builder += dashdash;
+    builder += boundary;
+    builder += crlf;
+
+    /* Generate headers. [PIC] */            
+    builder += 'Content-Disposition: form-data; name="picture"';
+    if (file.fileName) {
+      builder += '; filename="' + file.fileName + '"';
+    }
+    builder += crlf;
+
+    builder += 'Content-Type: '+file.type;
+    builder += crlf;
+    builder += crlf; 
+   
+    var bb = new BlobBuilder(); //NOTE
+    bb.append(builder);
+    bb.append(file);
+    builder = crlf;
+    
+    /* Mark end of the request.*/ 
+    builder += dashdash;
+    builder += boundary;
+    builder += dashdash;
+    builder += crlf;
+
+    bb.append(builder);   
+
+    $.ajax({
+        url: renjian.api.update,
+        type : 'POST',
+        data: bb.getBlob(),
+        dataType: 'text',
+        contentType: 'multipart/form-data; boundary=' + boundary,
+        processData: false,
+        beforeSend: function(xhr){
+    		var Persistence = chrome.extension.getBackgroundPage().Persistence;
+    		xhr.setRequestHeader("Authorization", "Basic " + Base64.encode(Persistence.userName.val() + ":" + Persistence.password.val()));
+    		if(xhr.upload){
+	            xhr.upload.onprogress = function(ev){
+            	    var precent = parseInt((ev.loaded / ev.total) * 100);
+            	    $("#progressBar")[0].style.width = precent + "%";
+            	    $("#progressBar span").html(precent + "%");
+	            }
+	        }     	
+    	},
+        success: function (data, status, xhr) {
+    		showMessage("发送成功！"); 
+    		resetUpload();
+        },
+        error: function(xhr, status, e){
+        	showMessage("发生错误了：" + e);
+        	resetUpload()
+        }
+    });
+}
+function showMessage(sHtml, speed, noFx){
+	sHtml = "<p class='noticeCtTp'>" + sHtml + "</p>";
+	$("table.notification").remove();
+	if(showMessage.timer) clearTimeout(showMessage.timer);
+	$(document.body).append('<table class="notification" cellspacing="0" cellpadding="0"><tr><td><div class="noticeCt">'+sHtml+'</div></td></tr></table>');
+	$("table.notification").css({zIndex: ++$.zIndex, left: $.center().left-$("table.notification").width()/2,top: $.center().top-$("table.notification").height()/2}).fadeIn(function(){
+		showMessage.timer = setTimeout('$("table.notification").fadeOut()', speed||3000);
+	});
+}
+function resetUpload(){
+    $("#imgPreview").html('');
+    $("#progressBar")[0].style.width = "0%";
+    $("#progressBar span").html("");	
+}
+function checkFile(file){
+	var FILECHECK = {maxFileSize: 1024000*3, fileTypes: "__image/gif__image/jpeg__image/jpg__image/png__"};
+	var check = true;
+	if(file){
+		if(FILECHECK.fileTypes.indexOf('__'+file.type+'__') < 0){
+			showMessage('文件类型不正确，仅支持JPEG,GIF,PNG图片。');
+		    check = false;
+		}else if(file.size > FILECHECK.maxFileSize){
+			showMessage('文件太大，请选择小于3M的文件。');
+			check = false;
+		}
+	}else{
+		alert('请选择要上传的图片。');
+		check = false;
+	}	
+	return check;
+}
+function selectFile(fileEle){
+    var file = fileEle.files[0];
+    if(file){
+        $("#imgPreview").html('');
+        $("#progressBar")[0].style.width = "0%";
+        $("#progressBar span").html("");
+        var check = checkFile(file);
+        if(check){
+            var reader = new FileReader();
+            reader.onload = function(e){
+                $("#imgPreview").html('<img class="pic" src="' + e.target.result + '" />');
+            };
+            reader.readAsDataURL(file);
+        }
+    }    
+}
+$(document).ready(function(){
+	var txtVal = parent.localStorage.getItem("txtVal");
+	if(txtVal) $("#say").val(txtVal);
+	$("#postBtn").click(sendImg);
+	$("#clickEmote").click(emoteHandler);
+	$(document.body).click(function(e){
+		if(e && e.target && (e.target.nodeType == 3 || e.target.nodeType == 1 && e.target.tagName != "SPAN" && e.target.tagName != "A")){
+		     if($("div.emotCt").is(":visible")) $("div.emotCt").hide();
+		}				
+	});	
+});
+</script>
+</head>
+<body>
+<div id="postArea">
+	<div id="txtCt"><textarea id="say"></textarea></div>
+	<div id="btnCt">
+		<input id="postBtn" class="pointer" type="button" value="发送人间大炮" />
+		<a href="#" class="clickEmote" id="clickEmote">表情</a>
+	</div>
+</div>
+<div class="fileSel graph">
+	<strong id="progressBar" class="bar" style="width: 0%;"><span></span></strong>
+	<div class="selTip" style="font-size: 20px">点此选择图片或者将图片拖放至此</div>
+</div>
+<input type="file" id="picFile" onchange="selectFile(this)" />
+<div id="imgPreview"></div>
+<div class="emotCt hide" id="emotCt">
+	<div class="emotBox">
+		  <div class="emots" id="emots"></div>
+	</div>
+</div>
+</body>
+</html>

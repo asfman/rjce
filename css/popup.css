@@ -249,3 +249,13 @@ a.recommendTag{
 .emots .emot:hover{
 	border-color: #ccc;
 }
+
+.uploadIco{
+	display: inline-block;
+	width: 16px;
+	height: 16px;
+	text-indent: -999em;
+	margin: 4px 0 0 6px;
+	overflow: hidden;
+	background: url(../images/imgico.gif) no-repeat;
+}

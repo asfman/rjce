@@ -178,6 +178,15 @@ try{
 		setTimeout("chrome.tabs.create({url: chrome.extension.getURL('options.html')})", 100);
 	}
 }catch(e){alert(e.message);}
+function openUploadImage(){
+	if(!window.BlobBuilder){
+		alert("你的chrome版本不支持上传图片，请升级！")
+		return false;
+	}
+    var l = (window.screen.availWidth-510)/2;
+    localStorage.setItem("txtVal", $("#say").val());
+    window.open('upimage.html', '_blank', 'left=' + l + ',top=30,width=510,height=600,menubar=no,location=no,resizable=no,scrollbars=yes,status=yes');
+}
 </script>
 </head>
 <body>
@@ -190,7 +199,8 @@ try{
 			<div id="txtCt"><textarea id="say"></textarea></div>
 			<div id="btnCt">
 				<input id="postBtn" class="pointer" type="button" value="发送人间大炮" />
-				<a href="#" class="clickEmote" id="clickEmote">表情</a>
+				<a title="表情" href="#" class="clickEmote" id="clickEmote">表情</a>
+				<a title="上传图片" href="javascript:void()" class="uploadIco" onclick="openUploadImage()">上传图片</a>
 			</div>
 		</div>
 		<div id="controlPostArea">
